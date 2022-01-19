@@ -1,9 +1,11 @@
 close all
 clear
 
-org_folder = "M:\MAI_dataset\Origin_set\BBB-360-png";
-degrade_folder = "M:\MAI_dataset\Degraded_set\BBB\frame";
-mask_folder = "M:\MAI_dataset\Degraded_set\BBB\mask";
+FILM_NAME = "BBB";
+FILM_FOLDER = "BBB-360";
+org_folder = "M:\MAI_dataset\Origin_set\" + FILM_FOLDER + "-png";
+degrade_folder = "M:\MAI_dataset\Degraded_set\"+ FILM_NAME + "\frame";
+mask_folder = "M:\MAI_dataset\Degraded_set\"+ FILM_NAME + "\mask";
 
 if ~isfolder(org_folder)
   errorMessage = sprintf( ...
@@ -18,18 +20,19 @@ pngFiles = dir(imgPattern);
 % Processing images
 max_width = 3;
 colormap(gray(256));
+new_size = [180, 320];
+fprintf("Film: %s, number of pictures: %i\n", FILM_FOLDER, length(pngFiles))
 
 for i = 1 : length(pngFiles)
     frameName = pngFiles(i).name;
-    if mod(i, 10) == 0
-        fprintf("Processing: %d of %d -- '%s'.\n", ...
-            i, length(pngFiles), frameName)
+    if mod(i, 50) == 0
+        fprintf("Processing: %d of %d -- '%s'.\n", i, length(pngFiles), frameName)
     end
     fullName = fullfile(org_folder, frameName);
     frame_org = imread(fullName);
-    gray_frame = im2gray(imresize(frame_org, [180, 320])); % 1/5 of 1080p
+    gray_frame = im2gray(imresize(frame_org, new_size)); % 1/5 of 1080p
     [rows, cols, chan] = size(gray_frame);
-    binary_mask = zeros(180, 320, 1, 'double');
+    binary_mask = zeros(rows, cols, 1, 'double');
     degrade = gray_frame;
     degrade2 = double(degrade);
     
@@ -37,21 +40,20 @@ for i = 1 : length(pngFiles)
         line_pos = floor(rand * (cols - 2 * max_width)) + max_width + 1;
         w = round(1 + rand * max_width);
         a = rand * 100;
-
+        
         if (line_pos - w > 1)
-            left_boundary = line_pos - w;
+            left_boundary = line_pos - floor(w / 2);
         else
             left_boundary = 1;
         end
-        if (line_pos + w <= 320)
-            right_boundary = line_pos + w;
+        if (line_pos + w <= cols)
+            right_boundary = line_pos + ceil(w / 2);
         else
-            right_boundary = line_pos - w;
+            right_boundary = cols;
         end
         scratch_width = right_boundary- left_boundary + 1;
         
-        binary_mask(:, left_boundary : right_boundary)= ...
-            ones(180, scratch_width);
+        binary_mask(:, left_boundary : right_boundary) = ones(rows, scratch_width);
 
         slope = randi([-10, 10]) * 0.0005;
         for j = 1 : rows
@@ -66,10 +68,10 @@ for i = 1 : length(pngFiles)
     % binary_mask = binary_mask > 0;
     degradedFullName = fullfile(degrade_folder, frameName);
     maskFullName = fullfile(mask_folder, frameName);
-    imwrite(degrade2(1:180, 1:320),...
+    imwrite(degrade2(1:rows, 1:cols),...
         colormap(gray(256)), degradedFullName); 
-    imwrite(binary_mask(1:180, 1:320), maskFullName); 
-    % imshow(imresize(degrade2, [800, 1920]), colormap(gray(256)));
+    imwrite(binary_mask(1:rows, 1:cols), maskFullName); 
+    imshow(imresize(degrade2, [800, 1920]), colormap(gray(256)));
     
 end
 

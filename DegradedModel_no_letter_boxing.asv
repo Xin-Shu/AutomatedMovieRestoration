@@ -1,9 +1,9 @@
 close all
 clear
 
-org_folder = "M:\MAI_dataset\Origin_set\BBB-360-png";
-degrade_folder = "M:\MAI_dataset\Degraded_set\BBB\frame";
-mask_folder = "M:\MAI_dataset\Degraded_set\BBB\mask";
+org_folder = "M:\MAI_dataset\Origin_set\ED-360-png";
+degrade_folder = "M:\MAI_dataset\Degraded_set\ED\frame";
+mask_folder = "M:\MAI_dataset\Degraded_set\ED\mask";
 
 if ~isfolder(org_folder)
   errorMessage = sprintf( ...
@@ -19,7 +19,7 @@ pngFiles = dir(imgPattern);
 max_width = 3;
 colormap(gray(256));
 
-for i = 1 : length(pngFiles)
+for i = 1000 %1 : length(pngFiles)
     frameName = pngFiles(i).name;
     if mod(i, 10) == 0
         fprintf("Processing: %d of %d -- '%s'.\n", ...
@@ -29,7 +29,7 @@ for i = 1 : length(pngFiles)
     frame_org = imread(fullName);
     gray_frame = im2gray(imresize(frame_org, [180, 320])); % 1/5 of 1080p
     [rows, cols, chan] = size(gray_frame);
-    binary_mask = zeros(180, 320, 1, 'double');
+    binary_mask = zeros(rows, cols, 1, 'double');
     degrade = gray_frame;
     degrade2 = double(degrade);
     
@@ -50,8 +50,8 @@ for i = 1 : length(pngFiles)
         end
         scratch_width = right_boundary- left_boundary + 1;
         
-        binary_mask(:, left_boundary + 1 : right_boundary - 1)= ...
-            ones(180, scratch_width);
+        binary_mask(:, left_boundary : right_boundary)= ...
+            ones(rows, scratch_width);
 
         slope = randi([-10, 10]) * 0.0005;
         for j = 1 : rows
@@ -66,10 +66,10 @@ for i = 1 : length(pngFiles)
     % binary_mask = binary_mask > 0;
     degradedFullName = fullfile(degrade_folder, frameName);
     maskFullName = fullfile(mask_folder, frameName);
-    imwrite(degrade2(1:180, 1:320),...
+    imwrite(degrade2(1:rows, 1:cols),...
         colormap(gray(256)), degradedFullName); 
-    imwrite(binary_mask(1:180, 1:320), maskFullName); 
-    % imshow(imresize(degrade2, [800, 1920]), colormap(gray(256)));
+    imwrite(binary_mask(1:rows, 1:cols), maskFullName); 
+    imshow(imresize(degrade2, [800, 1920]), colormap(gray(256)));
     
 end
 

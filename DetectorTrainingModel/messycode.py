@@ -28,7 +28,7 @@ os.environ['DML_VISIBLE_DEVICES'] = '0'
 
 input_dir = "M:/MAI_dataset/tempSamples/degraded/"
 target_dir = "M:/MAI_dataset/tempSamples/mask/"
-img_size = (180, 320)  # (273, 640)
+img_size = (180, 320)  # (273, 640)(180, 320)
 num_classes = 2
 batch_size = 2
 
@@ -67,20 +67,20 @@ class GeneralDetection(keras.utils.Sequence):
         i = idx * self.batch_size
         batch_input_img_paths = self.input_img_paths[i:i + self.batch_size]
         batch_target_img_paths = self.target_img_paths[i:i + self.batch_size]
-        x = np.zeros((self.batch_size,) + self.img_size + (1,), dtype="uint8")  # uint8
+        x = np.zeros((self.batch_size,) + self.img_size + (1,), dtype="float32")  # uint8
         for j, path in enumerate(batch_input_img_paths):
             img = load_img(path, target_size=self.img_size, color_mode="grayscale")
-            x[j] = img
-        y = np.zeros((self.batch_size,) + self.img_size + (1,), dtype="uint8")
+            x[j] = np.expand_dims(img, 2)
+        y = np.zeros((self.batch_size,) + self.img_size + (1,), dtype="float32")
         for j, path in enumerate(batch_target_img_paths):
             img = load_img(path, target_size=self.img_size, color_mode="grayscale")
-            y[j] = img
+            y[j] = np.expand_dims(img, 2)
         # print(x[300, 100], y[300, 100])
         return x, y
 
 
 def get_model(img_size_, num_classes_):
-    inputs = keras.Input(shape=img_size_)  # img_size_ = [180, 320, 1]
+    inputs = keras.Input(shape=img_size_ + (1,))  # img_size_ = [180, 320, 1]
 
     """ [First half of the network: downsampling inputs] """
 

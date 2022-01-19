@@ -2,6 +2,7 @@ import os
 import sys
 import random
 from shutil import copyfile
+os.environ['DML_VISIBLE_DEVICES'] = '0'
 
 # Elephents Dream
 ED_ORG = 'M:/MAI_dataset/Origin_set/ED-360-png/'
@@ -44,7 +45,7 @@ def sampling_frames(degraded_path, mask_path, name):
     )
     totalFrames = len(frameFiles)
 
-    list_num_of_sample = random.sample(range(0, totalFrames), 300)
+    list_num_of_sample = random.sample(range(3000, totalFrames - 3000), 300)
 
     for num in list_num_of_sample:
         count += 1
@@ -70,7 +71,7 @@ def main(args):
     sampling_frames(ED_DEGRADED, ED_MASK, 'ED')
     sampling_frames(BBB_DEGRADED, BBB_MASK, 'BBB')
     sampling_frames(TOS_DEGRADED, TOS_MASK, 'TOS')
-    sampling_frames(ST_DEGRADED, ST_MASK, 'ST')
+    # sampling_frames(ST_DEGRADED, ST_MASK, 'ST')
 
 
 if __name__ == '__main__':

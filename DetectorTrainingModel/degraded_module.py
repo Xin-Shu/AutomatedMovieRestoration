@@ -1,98 +1,107 @@
 import os
 import sys
 import time
+
+import random
 import cv2 as cv
 import numpy as np
+import matplotlib.pyplot as plt
 
-org_folder = 'M:\\MAI_dataset\\Origin_set\\ED-360-png'
-degrade_folder = 'M:\\MAI_dataset\\Degraded_set\\ED\\frame'
-mask_folder = 'M:\\MAI_dataset\\Degraded_set\\ED\\mask'
+os.environ['DML_VISIBLE_DEVICES'] = '0'
+new_size = (320, 180)
+fps = 100
 
 
 def makeLineProfile(cols, pos, amplitude, damping, m, row, w):
     x = np.array(range(0, cols))
     dx = abs(x - (m * row + pos))
     profile = amplitude * (np.power(damping, dx)) * np.cos(3 * np.pi * dx / (2 * w))
-
     return profile
 
 
-def degraded_module():
-    global org_folder, degrade_folder, mask_folder
+def degraded_module(org_folder, degrade_folder, mask_folder):
     if os.path.isdir(org_folder) is False:
         import warnings
         errorMessage = f'Error: The following folder does not exist:\n%s', org_folder
         warnings.simplefilter(errorMessage)
 
     else:
-        imgPattern = os.path.join(org_folder, '*.png')
-        pngFiles = os.listdir(imgPattern)
-
+        pngFiles = [file for file in os.listdir(org_folder) if file.endswith('.png')]
         # Processing images
         max_width = 3
-# colormap(gray(256));
-#
-        for i in range(1, len(pngFiles)):
-            frameName = pngFiles[i].name
-# if mod(i, 10) == 0
-#     fprintf("Processing: %d of %d -- '%s'.\n", ...
-#     i, length(pngFiles), frameName)
-#     end
-#     fullName = fullfile(org_folder, frameName);
-#     frame_org = imread(fullName);
-#     gray_frame = im2gray(imresize(frame_org, [180, 320])); % 1 / 5
-#     of
-#     1080
-#     p
-#     [rows, cols, chan] = size(gray_frame);
-#     binary_mask = zeros(180, 320, 1, 'double');
-#     degrade = gray_frame;
-#     degrade2 = double(degrade);
-#
-#     for line_num = 1: (1 + floor(rand * 5)) % Add
-#     randomly
-#     up
-#     to
-#     5
-#     lines
-#     line_pos = floor(rand * (cols - 2 * max_width)) + max_width + 1;
-#     w = round(1 + rand * max_width);
-#     a = rand * 100;
-#
-#     if (line_pos - w > 1)
-#         left_boundary = line_pos - w;
-#     else
-#         left_boundary = 1;
-#     end
-#     if (line_pos + w <= 320)
-#         right_boundary = line_pos + w;
-#     else
-#         right_boundary = line_pos - w;
-#     end
-#     scratch_width = right_boundary - left_boundary + 1;
-#
-#     binary_mask(:, left_boundary: right_boundary)= ...
-#     ones(180, scratch_width);
-#
-# slope = randi([-10, 10]) * 0.0005;
-# for j = 1: rows
-# profile = makeLineProfile(...
-# cols, line_pos, (a - 50), 0.25, slope, j, w);
-# degrade2(j, left_boundary: right_boundary) = ...
-# double(degrade2(j, left_boundary: right_boundary)) ...
-# + profile(:, left_boundary: right_boundary);
-# end
-# end
-#
-# % binary_mask = binary_mask > 0;
-# degradedFullName = fullfile(degrade_folder, frameName);
-# maskFullName = fullfile(mask_folder, frameName);
-# imwrite(degrade2(1: 180, 1: 320), ...
-# colormap(gray(256)), degradedFullName);
-# imwrite(binary_mask(1: 180, 1: 320), maskFullName);
-# % imshow(imresize(degrade2, [800, 1920]), colormap(gray(256)));
-#
-# end
-#
-# fprintf('%s\n', "INFO: Finished Images Processing!");
-#
+        # colormap(gray(256));
+        scratch_num_list = []
+
+        count = 0
+        for i in range(1, len(pngFiles) + 1):
+            count += 1
+            start_time = time.time()
+            frameName = org_folder + f'/{pngFiles[i]}'
+
+            fullName = os.path.join(org_folder, frameName)
+            frame_org = cv.imread(fullName)
+            frame_resize = cv.resize(frame_org, new_size)
+            gray_frame = cv.cvtColor(frame_resize, cv.COLOR_RGB2GRAY)  # 1 / 5 of 1080p
+            rows, cols = gray_frame.shape
+            binary_mask = np.zeros([rows, cols, 1], 'double')
+            degrade = gray_frame
+            degrade2 = degrade
+            scratch_num = 1 + random.randint(0, 4)
+            scratch_num_list.append(scratch_num)
+            if (i % 100) == 0:
+                print(f'Processing: {i} of {len(pngFiles)} -- {frameName}')
+                scratch_num_list = np.array(scratch_num_list)
+                list_count = np.bincount(scratch_num_list)[np.unique(scratch_num_list)]
+                print(list_count)
+                scratch_num_list = []
+
+            for line_num in range(1, scratch_num + 1):  # Add randomly up to 5 lines
+                line_pos = random.randint(max_width, cols - 2 * max_width) + max_width + 1
+                w = 1 + random.randint(0, max_width - 1)
+                a = random.randint(100, 150)
+                if line_pos - w > 0:
+                    left_boundary = line_pos - int(np.floor(w / 2))
+                else:
+                    left_boundary = 0
+                if line_pos + w < cols:
+                    right_boundary = line_pos + int(np.ceil(w / 2))
+                else:
+                    right_boundary = cols - 1
+                if right_boundary == left_boundary:
+                    right_boundary = left_boundary + 1
+                scratch_width = right_boundary - left_boundary
+
+                binary_mask[:, left_boundary:right_boundary] = 1
+                slope = random.randint(-10, 10) * 0.0010
+                for n in range(0, rows):
+                    profile = makeLineProfile(cols, line_pos, (a - 50), 0.25, slope, n, w)
+                    temp = degrade2[n, left_boundary:right_boundary] + profile[left_boundary:right_boundary]
+                    np.place(temp, temp > 255, 255)
+                    np.place(temp, temp < 0, 0)
+                    degrade2[n, left_boundary:right_boundary] = temp
+
+            degradedFullName = degrade_folder + f'/{count:05d}' + '.png'
+            maskFullName = mask_folder + f'/{count:05d}' + '.png'
+            cv.imwrite(degradedFullName, degrade2)
+            cv.imwrite(maskFullName, binary_mask)
+
+            cv.imshow(f'Degraded frame', cv.resize(degrade2, [720, 360]))
+            cv.imshow(f'Mask', cv.resize(binary_mask, [720, 360]))
+            cv.moveWindow(f'Degraded frame', 100, 100)
+            cv.moveWindow(f'Mask', 900, 100)
+            cv.waitKey(int(1000 / fps))
+
+
+def main(args):
+    film_name = [['BBB', 'BBB-360'], ['ED', 'ED-360'], ['TOS', 'TOS-1080']]
+    for name, resol in [['BBB', 'BBB-360']]:
+        org_folder = f'M:/MAI_dataset/Origin_set/{resol}-png'
+        degrade_folder = f'M:/MAI_dataset/Degraded_set/{name}/frame'
+        mask_folder = f'M:/MAI_dataset/Degraded_set/{name}/mask'
+        degraded_module(org_folder, degrade_folder, mask_folder)
+        print(f'INFO: Finished picture processing of film: {name}!')
+
+
+if __name__ == '__main__':
+    main(sys.argv)
+
