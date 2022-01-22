@@ -1,8 +1,11 @@
 import os
 import sys
 import random
+
+import pyopencl as cl
 from shutil import copyfile
-os.environ['DML_VISIBLE_DEVICES'] = '0'
+os.environ['PYOPENCL_COMPILER_OUTPUT'] = '1'
+os.environ['PYOPENCL_CTX'] = '1'
 
 # Elephents Dream
 ED_ORG = 'M:/MAI_dataset/Origin_set/ED-360-png/'
@@ -45,7 +48,7 @@ def sampling_frames(degraded_path, mask_path, name):
     )
     totalFrames = len(frameFiles)
 
-    list_num_of_sample = random.sample(range(3000, totalFrames - 3000), 300)
+    list_num_of_sample = random.sample(range(3000, totalFrames - 3000), 400)
 
     for num in list_num_of_sample:
         count += 1

@@ -128,7 +128,7 @@ val_gen = GeneralDetection(batch_size, img_size, val_input_img_paths, val_target
 
 keras.backend.clear_session()
 
-use_pretrained = False
+use_pretrained = True
 if use_pretrained:
     model = keras.models.load_model("generalDegradedDetection.h5")
 else:
@@ -143,7 +143,7 @@ else:
     callbacks = [
         keras.callbacks.ModelCheckpoint("generalDegradedDetection.h5", save_best_only=True)
     ]
-    epochs = 20
+    epochs = 7
     history = model.fit(train_gen, epochs=epochs, validation_data=val_gen, callbacks=callbacks)
 
     # list all data in history
@@ -162,36 +162,35 @@ else:
     plt.title('model loss')
     plt.ylabel('loss')
     plt.xlabel('epoch')
-    plt.legend(['train', 'test'], loc='upper left')
+    plt.legend(['train', 'test'], loc='upper right')
 
 
 i = 100
 val_gen = GeneralDetection(batch_size, img_size, val_input_img_paths, val_target_img_paths)
-val_preds = model.predict(val_gen[i])
+val_preds = model.predict(val_gen)
 
 
-def display_mask():
+def display_mask(i):
     """Quick utility to display a model's prediction."""
-    mask = np.argmax(val_preds, axis=-1)
+    mask = np.argmax(val_preds[i], axis=-1)
     mask = np.expand_dims(mask, axis=-1)
-    a_file = open("temp/test.txt", "w")
-    arr_reshaped = mask.reshape(mask.shape[0], -1)
-    np.savetxt(a_file, arr_reshaped)
-    a_file.close()
+    img = PIL.ImageOps.autocontrast(keras.preprocessing.image.array_to_img(mask))
+    return img
 
 
 # Display results for validation image #10
-
+i = 10
 
 # Display input image
-# img1 = Image(filename=val_input_img_paths[i])
-print(f'Length: {len(val_input_img_paths)}')
-print(val_input_img_paths[i])
+img1 = Image(filename=val_input_img_paths[i])
+
 # Display ground-truth target mask
 img2 = PIL.ImageOps.autocontrast(load_img(val_target_img_paths[i]))
 
 # Display mask predicted by our model
-display_mask()  # Note that the model only sees inputs at 150x150.
-img2.save('temp/original.png')
-plt.show()
-keras.backend.clear_session()
+img3 = display_mask(i)  # Note that the model only sees inputs at 150x150.
+print(type(img1), type(img2), type(img3))
+display(img1)
+img2.save('temp/img2.png')
+img3.save('temp/img3.png')
+

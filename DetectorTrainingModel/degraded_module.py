@@ -5,11 +5,14 @@ import time
 import random
 import cv2 as cv
 import numpy as np
-import matplotlib.pyplot as plt
+import pyopencl as cl
+from pyopencl.tools import get_test_platforms_and_devices
 
-os.environ['DML_VISIBLE_DEVICES'] = '0'
+os.environ['PYOPENCL_COMPILER_OUTPUT'] = '1'
+os.environ['PYOPENCL_CTX'] = '1'
+cv.ocl.setUseOpenCL(True)
 new_size = (320, 180)
-fps = 100
+fps = 120
 
 
 def makeLineProfile(cols, pos, amplitude, damping, m, row, w):
@@ -33,9 +36,9 @@ def degraded_module(org_folder, degrade_folder, mask_folder):
         scratch_num_list = []
 
         count = 0
-        for i in range(1, len(pngFiles) + 1):
+        time_now = time.time()
+        for i in range(1, len(pngFiles)):
             count += 1
-            start_time = time.time()
             frameName = org_folder + f'/{pngFiles[i]}'
 
             fullName = os.path.join(org_folder, frameName)
@@ -46,16 +49,16 @@ def degraded_module(org_folder, degrade_folder, mask_folder):
             binary_mask = np.zeros([rows, cols, 1], 'double')
             degrade = gray_frame
             degrade2 = degrade
-            scratch_num = 1 + random.randint(0, 4)
+            scratch_num = 1 + random.randint(0, 3)
             scratch_num_list.append(scratch_num)
-            if (i % 100) == 0:
-                print(f'Processing: {i} of {len(pngFiles)} -- {frameName}')
-                scratch_num_list = np.array(scratch_num_list)
-                list_count = np.bincount(scratch_num_list)[np.unique(scratch_num_list)]
-                print(list_count)
-                scratch_num_list = []
 
-            for line_num in range(1, scratch_num + 1):  # Add randomly up to 5 lines
+            if (i % 100) == 0:
+                print(f'Processing: {i} of {len(pngFiles)} -- {pngFiles[i]}: {time.time() - time_now} sec')
+                scratch_num_list = np.array(scratch_num_list)
+                scratch_num_list = []
+                time_now = time.time()
+
+            for line_num in range(1, scratch_num + 1):  # Add randomly up to 4 lines
                 line_pos = random.randint(max_width, cols - 2 * max_width) + max_width + 1
                 w = 1 + random.randint(0, max_width - 1)
                 a = random.randint(100, 150)
@@ -87,14 +90,14 @@ def degraded_module(org_folder, degrade_folder, mask_folder):
 
             cv.imshow(f'Degraded frame', cv.resize(degrade2, [720, 360]))
             cv.imshow(f'Mask', cv.resize(binary_mask, [720, 360]))
-            cv.moveWindow(f'Degraded frame', 100, 100)
-            cv.moveWindow(f'Mask', 900, 100)
+            cv.moveWindow(f'Degraded frame', 2560, 0)
+            cv.moveWindow(f'Mask', 2560, 361)
             cv.waitKey(int(1000 / fps))
 
 
 def main(args):
     film_name = [['BBB', 'BBB-360'], ['ED', 'ED-360'], ['TOS', 'TOS-1080']]
-    for name, resol in [['BBB', 'BBB-360']]:
+    for name, resol in film_name:
         org_folder = f'M:/MAI_dataset/Origin_set/{resol}-png'
         degrade_folder = f'M:/MAI_dataset/Degraded_set/{name}/frame'
         mask_folder = f'M:/MAI_dataset/Degraded_set/{name}/mask'
