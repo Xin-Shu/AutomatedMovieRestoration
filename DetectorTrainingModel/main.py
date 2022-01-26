@@ -5,7 +5,11 @@ import random
 import numpy as np
 from PIL import ImageOps
 from IPython.display import Image, display
+from datetime import date
+import matplotlib.pyplot as plt
+import cv2 as cv
 
+import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.preprocessing.image import load_img
@@ -14,185 +18,227 @@ from tensorflow.keras.preprocessing.image import load_img
 DEFRADED_DIR = 'SintelTrailer_degraded/'
 MASK_DIR = 'SintelTrailer_BinaryMask/'
 
-input_img_paths = ''
-target_img_paths = ''
+os.environ['DML_VISIBLE_DEVICES'] = '0'
 
-image_size = (160, 160)
+input_dir = "M:/MAI_dataset/tempSamples/degraded/"
+target_dir = "M:/MAI_dataset/tempSamples/mask/"
+img_size = (180, 320)  # (273, 640)(180, 320)
 num_classes = 2
-batch_size = 32
+batch_size = 2
+
+date = date.today().strftime("%m-%d")
+result_dir = f'M:/MAI_dataset/TrainedModels/{date}'
+if os.path.isdir(result_dir) is False:
+    os.mkdir(result_dir)
 
 
-def load_dataset():
-    global input_img_paths, target_img_paths
+def load_dataset_path(input_dir_, target_dir_):
     print('Info: Reading dataset...')
     input_img_paths = sorted(
         [
-            os.path.join(DEFRADED_DIR, fname)
-            for fname in os.listdir(DEFRADED_DIR)
+            os.path.join(input_dir_, fname)
+            for fname in os.listdir(input_dir_)
             if fname.endswith(".png")
         ]
     )
     target_img_paths = sorted(
         [
-            os.path.join(MASK_DIR, fname)
-            for fname in os.listdir(MASK_DIR)
+            os.path.join(target_dir_, fname)
+            for fname in os.listdir(target_dir_)
             if fname.endswith(".png") and not fname.startswith(".")
         ]
     )
     print(f'Got dataset: {0} degraded images, {1} masks'.format(len(input_img_paths), len(target_img_paths)))
+    return input_img_paths, target_img_paths
 
 
-class SintelTrailerDataLoader(keras.utils.Sequence):
-    """Helper to iterate over the data (as Numpy arrays)."""
-
-    def __init__(self, batch_size_, image_size_, input_img_paths_, target_img_paths_):
+class ImageLoading(keras.utils.Sequence):
+    def __init__(self, batch_size_, img_size_, input_img_paths_, target_img_paths_):
         self.batch_size = batch_size_
-        self.image_size = image_size_
+        self.img_size = img_size_
         self.input_img_paths = input_img_paths_
         self.target_img_paths = target_img_paths_
 
     def __len__(self):
-        return len(self.input_img_paths)
+        return len(self.target_img_paths) // self.batch_size
 
-    def __getimage__(self, idx):
+    def __getitem__(self, idx):
         """Returns tuple (input, target) correspond to batch #idx."""
         i = idx * self.batch_size
-        batch_input_img_paths = self.input_img_paths[i:1 + self.batch_size]
-        batch_target_img_paths = self.target_img_paths[i:1 + self.batch_size]
-        x = np.zeros((self.batch_size,) + self.image_size + (1,), dtype="float32")
+        batch_input_img_paths = self.input_img_paths[i:i + self.batch_size]
+        batch_target_img_paths = self.target_img_paths[i:i + self.batch_size]
+        x = np.zeros((self.batch_size,) + self.img_size + (1,), dtype="float32")  # uint8
         for j, path in enumerate(batch_input_img_paths):
-            img = load_img(path, target_size=self.image_size, color_mode="grayscale")
+            img = load_img(path, target_size=self.img_size, color_mode="grayscale")
             x[j] = np.expand_dims(img, 2)
-        y = np.zeros((self.batch_size,) + self.image_size + (1,), dtype="float32")
+        y = np.zeros((self.batch_size,) + self.img_size + (1,), dtype="float32")
         for j, path in enumerate(batch_target_img_paths):
-            img = load_img(path, target_size=self.image_size, color_mode="grayscale")
+            img = load_img(path, target_size=self.img_size, color_mode="grayscale")
             y[j] = np.expand_dims(img, 2)
+        # print(x[300, 100], y[300, 100])
         return x, y
 
 
-def get_model(img_size, num_class):
-    inputs = keras.Input(shape=img_size + (1,))
+def get_model(img_size_, num_classes_):
+    inputs = keras.Input(shape=img_size_ + (1,))  # img_size_ = [180, 320, 1]
 
-    """[First half of the network: downsampling inputs]"""
+    """ [First half of the network: downsampling inputs] """
 
     # Entry block
-    x = layers.Conv2D(32, 3, strides=2, padding="same")(inputs)
-    x = layers.BatchNormalization()(x)
-    x = layers.Activation("relu")(x)
+    x1 = layers.Conv2D(32, 3, padding="same", activation="relu")(inputs)
+    x1 = layers.BatchNormalization()(x1)
 
-    previous_block_activation = x  # Set aside residual
+    x2 = layers.Conv2D(64, 2, padding="same", activation="relu")(x1)
+    x2 = layers.BatchNormalization()(x2)
 
-    # Blocks 1, 2, 3 are identical apart from the feature depth.
-    for filters in [64, 128, 256]:
-        x = layers.Activation("relu")(x)
-        x = layers.SeparableConv2D(filters, 3, padding="same")(x)
-        x = layers.BatchNormalization()(x)
+    x3 = layers.Conv2D(128, 2, padding="same", activation="relu")(x2)
+    x3 = layers.BatchNormalization()(x3)
 
-        x = layers.Activation("relu")(x)
-        x = layers.SeparableConv2D(filters, 3, padding="same")(x)
-        x = layers.BatchNormalization()(x)
+    encoder = layers.concatenate([x1, x2, x3])
+    encoder = layers.Conv2D(64, 1, padding="same")(encoder)
+    encoder = layers.MaxPooling2D(pool_size=(2, 2))(encoder)
 
-        x = layers.MaxPooling2D(3, strides=2, padding="same")(x)
+    y1 = layers.UpSampling2D(2)(encoder)
+    y1 = layers.Conv2DTranspose(32, 3, padding="same", activation="relu")(y1)
+    y1 = layers.BatchNormalization()(y1)
 
-        # Project residual
-        residual = layers.Conv2D(filters, 1, strides=2, padding="same")(
-            previous_block_activation
-        )
-        x = layers.add([x, residual])  # Add back residual
-        previous_block_activation = x  # Set aside next residual
-
-    '''[Second half of the network: upsampling inputs]'''
-
-    for filters in [256, 128, 64, 32]:
-        x = layers.Activation("relu")(x)
-        x = layers.Conv2DTranspose(filters, 3, padding="same")(x)
-        x = layers.BatchNormalization()(x)
-
-        x = layers.Activation("relu")(x)
-        x = layers.Conv2DTranspose(filters, 3, padding="same")(x)
-        x = layers.BatchNormalization()(x)
-
-        x = layers.UpSampling2D(2)(x)
-
-        # Project residual
-        residual = layers.UpSampling2D(2)(previous_block_activation)
-        residual = layers.Conv2D(filters, 1, padding="same")(residual)
-        x = layers.add([x, residual])  # Add back residual
-        previous_block_activation = x  # Set aside next residual
+    y2 = layers.Conv2DTranspose(32, 3, padding="same", activation="relu")(y1)
+    y2 = layers.BatchNormalization()(y2)
 
     # Add a per-pixel classification layer
-    outputs = layers.Conv2D(num_class, 3, activation="softmax", padding="same")(x)
+    outputs = layers.Conv2D(num_classes_, 3, activation="softmax", padding="same")(y2)
 
     # Define the model
-    model = keras.Model(inputs, outputs)
-    return model
+    model_ = keras.Model(inputs, outputs)
+    return model_
 
 
-def validation_split():
-    global batch_size, image_size, input_img_paths, target_img_paths
+def validation_split(input_img_paths, target_img_paths):
+    global batch_size, img_size
     val_samples = 200
-    random.Random(1337).shuffle(input_img_paths)
-    random.Random(1337).shuffle(target_img_paths)
+    random.Random(1200).shuffle(input_img_paths)
+    random.Random(1200).shuffle(target_img_paths)
     train_input_img_paths = input_img_paths[:-val_samples]
     train_target_img_paths = target_img_paths[:-val_samples]
     val_input_img_paths = input_img_paths[-val_samples:]
     val_target_img_paths = target_img_paths[-val_samples:]
     # Instantiate data Sequences for each split
-    train_gen = SintelTrailerDataLoader(
-        batch_size, image_size, train_input_img_paths, train_target_img_paths
-    )
-    val_gen = SintelTrailerDataLoader(batch_size, image_size, val_input_img_paths, val_target_img_paths)
+    train_gen = ImageLoading(batch_size, img_size, train_input_img_paths, train_target_img_paths)
+    val_gen = ImageLoading(batch_size, img_size, val_input_img_paths, val_target_img_paths)
     return train_gen, val_gen, val_input_img_paths, val_target_img_paths
 
 
-def display_mask(index, pred_mask):
-    """Quick utility to display a model's prediction."""
-    mask = np.argmax(pred_mask[index], axis=-1)
-    mask = np.expand_dims(mask, axis=-1)
-    img = PIL.ImageOps.autocontrast(keras.preprocessing.image.array_to_img(mask))
-    display(img)
-
-
-def training(trainset, valset, if_reuse, modelpath):
+def training(train_gen, val_gen, num_classes_, img_size_, use_pretrained, result_attempt_dir, test_gen):
     """Build model"""
-    global image_size, num_classes
-    if if_reuse:
-        model = keras.models.load_model("modelpath")
+    global result_dir
+    model_path = f'{result_attempt_dir}/generalDegradedDetection.h5'
+    if use_pretrained:
+        model = keras.models.load_model(model_path)
+        test_preds = model.predict(test_gen)
+        return test_preds
     else:
-        model = get_model(image_size, num_classes)
+        # Build model
+        model = get_model(img_size_, num_classes)
         model.summary()
-        model.compile(optimizer="rmsprop", loss="categorical_crossentropy")
+        optimizer = tf.contrib.opt.AdamWOptimizer(learning_rate=0.01, weight_decay=0.0001)
+        model.compile(optimizer=optimizer,
+                      loss=tf.keras.losses.SparseCategoricalCrossentropy(),
+                      metrics=["accuracy"]
+                      )
         callbacks = [
-            keras.callbacks.ModelCheckpoint("SintekTrailer.h5", save_best_only=True)
+            keras.callbacks.ModelCheckpoint(model_path, save_best_only=True)
         ]
-        epochs = 15
-        model.fit(trainset, epochs=epochs, validation_data=valset, callbacks=callbacks)
+        epochs = 7
+        history = model.fit(train_gen, epochs=epochs, validation_data=val_gen, callbacks=callbacks)
 
-    _, test_set, test_input_path, test_target_path = validation_split()
+        # list all data in history
+        print(history.history.keys())
+        # summarize history for accuracy
+        plt.plot(history.history['acc'])
+        plt.plot(history.history['val_acc'])
+        plt.title('model accuracy')
+        plt.ylabel('accuracy')
+        plt.xlabel('epoch')
+        plt.legend(['train', 'test'], loc='upper left')
 
-    pred = model.predict(test_set)
-    _index = random.randint(len(pred))
-    display(Image(filename=test_input_path[_index]))
-    display(PIL.ImageOps.autocontrast(load_img(test_target_path[_index])))
-    display_mask(_index, pred)
+        # summarize history for loss
+        plt.plot(history.history['loss'])
+        plt.plot(history.history['val_loss'])
+        plt.title('model loss')
+        plt.ylabel('loss')
+        plt.xlabel('epoch')
+        plt.legend(['train', 'test'], loc='upper right')
+        plt.show()
+        plt.savefig(f'{result_attempt_dir}/val_loss_acc_plot.png')
+
+        test_preds = model.predict(test_gen)
+        return test_preds
+
+
+def convert_array_to_imgs(result_attempt_dir, input_degraded_img_path, ground_truth_mask_path, test_preds):
+    """Quick utility to display a model's prediction."""
+    from shutil import rmtree
+
+    if os.path.isdir(f'{result_attempt_dir}/mask_predictions'):
+        rmtree(f'{result_attempt_dir}/mask_predictions')
+    if os.path.isdir(f'{result_attempt_dir}/degraded'):
+        rmtree(f'{result_attempt_dir}/degraded')
+    os.mkdir(f'{result_attempt_dir}/mask_predictions')
+    os.mkdir(f'{result_attempt_dir}/degraded')
+
+    index = 0
+    for (degraded_img_path, mask_ori_path) in zip(input_degraded_img_path, ground_truth_mask_path):
+        degraded_img = cv.imread(degraded_img_path)
+        mask_ori = cv.imread(mask_ori_path)
+
+        __mask = np.argmax(test_preds[index], axis=-1)
+        __mask = np.expand_dims(__mask, axis=-1)
+
+        cv.imwrite(f'{result_attempt_dir}/degraded/img{index}.png', degraded_img)
+        cv.imwrite(f'{result_attempt_dir}/mask_predictions/truth{index}.png', mask_ori)
+        cv.imwrite(f'{result_attempt_dir}/mask_predictions/pred{index}.png', __mask)
+
+        mask_preds = cv.imread(f'{result_attempt_dir}/mask_predictions/pred{index}.png', cv.IMREAD_GRAYSCALE)
+        cv.imshow(f'Degraded frame', cv.resize(degraded_img, [720, 360]))
+        cv.imshow(f'Mask_ori', cv.resize(mask_ori, [720, 360]) * 255)
+        cv.imshow(f'Mask_preds', cv.resize(mask_preds, [720, 360]) * 255)
+        cv.moveWindow(f'Degraded frame', 2560, 0)
+        cv.moveWindow(f'Mask_ori', 2560, 360)
+        cv.moveWindow(f'Mask_preds', 2560, 720)
+        cv.waitKey(int(1000 / 10))
+
+        index += 1
 
 
 def main(args):
-    load_dataset()
-    train_set, val_set, _, _ = validation_split()
+    keras.backend.clear_session()
+
+    attempts = 1
+
+    input_img_paths, target_img_paths = load_dataset_path(input_dir, target_dir)
+    train_gen, val_gen, val_input_img_paths, val_target_img_paths = validation_split(input_img_paths, target_img_paths)
+    _, test_gen, test_input_img_path, test_target_img_path = validation_split(input_img_paths, target_img_paths)
 
     '''Free up RAM in case the model definition cells were run multiple times'''
-    # keras.backend.clear_session()
-    pre_trained_model_path = 'SintekTrailer.h5'
-    # training(train_set, val_set, False, pre_trained_model_path)
-    model = get_model(image_size, num_classes)
-    model.summary()
-    model.compile(optimizer="rmsprop", loss="categorical_crossentropy")
-    callbacks = [
-        keras.callbacks.ModelCheckpoint("SintekTrailer.h5", save_best_only=True)
-    ]
-    epochs = 15
-    model.fit(train_set, epochs=epochs, validation_data=val_set, callbacks=callbacks)
+    keras.backend.clear_session()
+    if_reuse = input("Use pre-trained model? (Y/N)")
+    if if_reuse.lower() == 'y':
+        if_reuse = True
+        result_attempt_dir = f'{result_dir}/Attempt {attempts}'
+    else:
+        if_reuse = False
+        if os.path.isdir(f'{result_dir}/Attempt {attempts}') is False:
+            os.mkdir(f'{result_dir}/Attempt {attempts}')
+            result_attempt_dir = f'{result_dir}/Attempt {attempts}'
+        else:
+            while os.path.isdir(f'{result_dir}/Attempt {attempts}') is True:
+                attempts += 1
+            os.mkdir(f'{result_dir}/Attempt {attempts}')
+            result_attempt_dir = f'{result_dir}/Attempt {attempts}'
+
+    test_preds = training(train_gen, val_gen, num_classes, img_size, if_reuse, result_attempt_dir, test_gen)
+
+    convert_array_to_imgs(result_attempt_dir, test_input_img_path, test_target_img_path, test_preds)
 
 
 if __name__ == '__main__':

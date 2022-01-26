@@ -165,7 +165,6 @@ else:
     plt.legend(['train', 'test'], loc='upper right')
 
 
-i = 100
 val_gen = GeneralDetection(batch_size, img_size, val_input_img_paths, val_target_img_paths)
 val_preds = model.predict(val_gen)
 
