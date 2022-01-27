@@ -154,8 +154,6 @@ def training(train_gen, val_gen, num_classes_, img_size_, use_pretrained, result
         # list all data in history
         print(history.history.keys())
         # summarize history for accuracy
-        plt.plot(history.history['acc'])
-        plt.plot(history.history['val_acc'])
         # plt.plot(history.history['acc'])
         # plt.plot(history.history['val_acc'])
         # plt.title('model accuracy')
