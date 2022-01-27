@@ -156,10 +156,12 @@ def training(train_gen, val_gen, num_classes_, img_size_, use_pretrained, result
         # summarize history for accuracy
         plt.plot(history.history['acc'])
         plt.plot(history.history['val_acc'])
-        plt.title('model accuracy')
-        plt.ylabel('accuracy')
-        plt.xlabel('epoch')
-        plt.legend(['train', 'test'], loc='upper left')
+        # plt.plot(history.history['acc'])
+        # plt.plot(history.history['val_acc'])
+        # plt.title('model accuracy')
+        # plt.ylabel('accuracy')
+        # plt.xlabel('epoch')
+        # plt.legend(['train', 'test'], loc='upper left')
 
         # summarize history for loss
         plt.plot(history.history['loss'])
