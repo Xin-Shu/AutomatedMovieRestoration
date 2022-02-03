@@ -92,11 +92,11 @@ def degraded_module(org_folder, degrade_folder, mask_folder):
             cv.imshow(f'Mask', cv.resize(binary_mask, [720, 360]))
             cv.moveWindow(f'Degraded frame', 2560, 0)
             cv.moveWindow(f'Mask', 2560, 361)
-            cv.waitKey(int(1000 / fps))
+            cv.waitKey(1)
 
 
 def main(args):
-    film_name = [['BBB', 'BBB-360'], ['ED', 'ED-360'], ['TOS', 'TOS-1080']]
+    film_name = [['ST', 'ST(cut)-720']]  # [['BBB', 'BBB-360'], ['ED', 'ED-360'], ['TOS', 'TOS-1080']]
     for name, resol in film_name:
         org_folder = f'M:/MAI_dataset/Origin_set/{resol}-png'
         degrade_folder = f'M:/MAI_dataset/Degraded_set/{name}/frame'

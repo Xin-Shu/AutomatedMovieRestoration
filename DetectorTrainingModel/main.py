@@ -14,14 +14,13 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.preprocessing.image import load_img
 
-# Define fold path
-DEFRADED_DIR = 'SintelTrailer_degraded/'
-MASK_DIR = 'SintelTrailer_BinaryMask/'
-
 os.environ['DML_VISIBLE_DEVICES'] = '0'
 
+# Define fold path
 input_dir = "M:/MAI_dataset/tempSamples/degraded/"
 target_dir = "M:/MAI_dataset/tempSamples/mask/"
+valid_img_dir = "M:/MAI_dataset/tempSamples/valid_ST/degraded/"
+valid_mask_dir = "M:/MAI_dataset/tempSamples/valid_ST/mask/"
 img_size = (180, 320)  # (273, 640)(180, 320)
 num_classes = 2
 batch_size = 2
@@ -48,7 +47,7 @@ def load_dataset_path(input_dir_, target_dir_):
             if fname.endswith(".png") and not fname.startswith(".")
         ]
     )
-    print(f'Got dataset: {0} degraded images, {1} masks'.format(len(input_img_paths), len(target_img_paths)))
+    print(f'Got dataset: {len(input_img_paths)} degraded images, {len(target_img_paths)} masks')
     return input_img_paths, target_img_paths
 
 
@@ -162,14 +161,16 @@ def training(train_gen, val_gen, num_classes_, img_size_, use_pretrained, result
         # plt.legend(['train', 'test'], loc='upper left')
 
         # summarize history for loss
+        fig1 = plt.figure(figsize=(8, 6))
+        plt.title("ROC plot of classifiers", fontsize=20)
         plt.plot(history.history['loss'])
         plt.plot(history.history['val_loss'])
         plt.title('model loss')
         plt.ylabel('loss')
         plt.xlabel('epoch')
         plt.legend(['train', 'test'], loc='upper right')
+        plt.savefig(f'{result_attempt_dir}/val_loss_acc_plot.png', )
         plt.show()
-        plt.savefig(f'{result_attempt_dir}/val_loss_acc_plot.png')
 
         test_preds = model.predict(test_gen)
         return test_preds
@@ -189,10 +190,11 @@ def convert_array_to_imgs(result_attempt_dir, input_degraded_img_path, ground_tr
     index = 0
     for (degraded_img_path, mask_ori_path) in zip(input_degraded_img_path, ground_truth_mask_path):
         degraded_img = cv.imread(degraded_img_path)
-        mask_ori = cv.imread(mask_ori_path)
+        mask_ori = cv.imread(mask_ori_path) * 255
 
         __mask = np.argmax(test_preds[index], axis=-1)
-        __mask = np.expand_dims(__mask, axis=-1)
+        __mask = np.expand_dims(__mask, axis=-1) * 255
+        __mask = __mask * 255
 
         cv.imwrite(f'{result_attempt_dir}/degraded/img{index}.png', degraded_img)
         cv.imwrite(f'{result_attempt_dir}/mask_predictions/truth{index}.png', mask_ori)
@@ -200,8 +202,8 @@ def convert_array_to_imgs(result_attempt_dir, input_degraded_img_path, ground_tr
 
         mask_preds = cv.imread(f'{result_attempt_dir}/mask_predictions/pred{index}.png', cv.IMREAD_GRAYSCALE)
         cv.imshow(f'Degraded frame', cv.resize(degraded_img, [720, 360]))
-        cv.imshow(f'Mask_ori', cv.resize(mask_ori, [720, 360]) * 255)
-        cv.imshow(f'Mask_preds', cv.resize(mask_preds, [720, 360]) * 255)
+        cv.imshow(f'Mask_ori', cv.resize(mask_ori, [720, 360]))
+        cv.imshow(f'Mask_preds', cv.resize(mask_preds, [720, 360]))
         cv.moveWindow(f'Degraded frame', 2560, 0)
         cv.moveWindow(f'Mask_ori', 2560, 360)
         cv.moveWindow(f'Mask_preds', 2560, 720)
@@ -216,8 +218,9 @@ def main(args):
     attempts = 1
 
     input_img_paths, target_img_paths = load_dataset_path(input_dir, target_dir)
+    valid_img, valid_mask = load_dataset_path(valid_img_dir, valid_mask_dir)
     train_gen, val_gen, val_input_img_paths, val_target_img_paths = validation_split(input_img_paths, target_img_paths)
-    _, test_gen, test_input_img_path, test_target_img_path = validation_split(input_img_paths, target_img_paths)
+    _, test_gen, test_input_img_path, test_target_img_path = validation_split(valid_img, valid_mask)
 
     '''Free up RAM in case the model definition cells were run multiple times'''
     keras.backend.clear_session()

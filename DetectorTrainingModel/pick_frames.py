@@ -48,7 +48,7 @@ def sampling_frames(degraded_path, mask_path, name):
     )
     totalFrames = len(frameFiles)
 
-    list_num_of_sample = random.sample(range(3000, totalFrames - 3000), 400)
+    list_num_of_sample = random.sample(range(3000, totalFrames - 1000), 400)
 
     for num in list_num_of_sample:
         count += 1
