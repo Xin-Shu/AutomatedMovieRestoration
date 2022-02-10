@@ -34,7 +34,7 @@ def degraded_module(org_folder, degrade_folder, mask_folder):
         max_width = 3
         # colormap(gray(256));
         scratch_num_list = []
-        line_pos_set = 200
+        line_pos_set, brightness_set = 200, 100
         count = 0
         time_now = time.time()
         for i in range(1, len(pngFiles)):
@@ -52,17 +52,17 @@ def degraded_module(org_folder, degrade_folder, mask_folder):
             scratch_num = 1 + random.randint(0, 1)
             scratch_num_list.append(scratch_num)
 
-            if (i % 100) == 0:
+            if (i % 100) == 0 or i == len(pngFiles):
                 print(f'Processing: {i} of {len(pngFiles)} -- {pngFiles[i]}: {time.time() - time_now} sec')
                 scratch_num_list = np.array(scratch_num_list)
                 scratch_num_list = []
                 time_now = time.time()
 
-            for line_num in range(1, scratch_num + 1):  # Add randomly up to 4 lines
+            for line_num in range(1):  # Add randomly up to 4 lines
                 # line_pos = random.randint(max_width, cols - 2 * max_width) + max_width + 1
-                line_pos = random.randint(0, 2) + line_pos_set
+                line_pos = random.randint(-2, 2) + line_pos_set
                 w = 1 + random.randint(0, max_width - 1)
-                a = random.randint(100, 150)
+                a = (random.random() * np.sqrt(0.1) + 1) * brightness_set + random.random()
                 if line_pos - w > 0:
                     left_boundary = line_pos - int(np.floor(w / 2))
                 else:
@@ -97,7 +97,7 @@ def degraded_module(org_folder, degrade_folder, mask_folder):
 
 
 def main(args):
-    film_name = [['ST', 'ST(cut)-720']]  # [['BBB', 'BBB-360'], ['ED', 'ED-360'], ['TOS', 'TOS-1080']]
+    film_name = [['ST', 'ST(cut)-720'], ['BBB', 'BBB-360'], ['ED', 'ED-360'], ['TOS', 'TOS-1080']]
     for name, resol in film_name:
         org_folder = f'M:/MAI_dataset/Origin_set/{resol}-png'
         degrade_folder = f'M:/MAI_dataset/Degraded_set/{name}/frame'
