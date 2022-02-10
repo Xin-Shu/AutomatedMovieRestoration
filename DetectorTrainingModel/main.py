@@ -20,7 +20,7 @@ input_dir = "M:/MAI_dataset/tempSamples/degraded/"
 target_dir = "M:/MAI_dataset/tempSamples/mask/"
 valid_img_dir = 'M:/MAI_dataset/Sequence_lines_1/'        # "M:/MAI_dataset/tempSamples/valid_ST/degraded/"
 valid_mask_dir = "M:/MAI_dataset/tempSamples/valid_ST/mask/"
-img_size = (360, 640)  # (273, 640)(180, 320)
+img_size = (180, 360)  # (273, 640)(360, 640)
 num_classes = 2
 batch_size = 2
 
@@ -114,9 +114,12 @@ def get_model(img_size_, num_classes_):
 def validation_split(input_img_paths, target_img_paths):
     global batch_size, img_size
     num_of_samples = len(input_img_paths)
-    val_samples = int(num_of_samples * 0.3)
-    random.Random(num_of_samples).shuffle(input_img_paths)
-    random.Random(num_of_samples).shuffle(target_img_paths)
+    if num_of_samples <= 50:
+        val_samples = num_of_samples
+    else:
+        val_samples = int(num_of_samples * 0.3)
+    # random.Random(num_of_samples).shuffle(input_img_paths)
+    # random.Random(num_of_samples).shuffle(target_img_paths)
     train_input_img_paths = input_img_paths[:-val_samples]
     train_target_img_paths = target_img_paths[:-val_samples]
     val_input_img_paths = input_img_paths[-val_samples:]
@@ -140,7 +143,7 @@ def training(train_gen, val_gen, num_classes_, img_size_, use_pretrained, result
         # Build model
         model = get_model(img_size_, num_classes)
         model.summary()
-        optimizer = tf.contrib.opt.AdamWOptimizer(learning_rate=0.01, weight_decay=0.0001)
+        optimizer = tf.contrib.opt.AdamWOptimizer(learning_rate=0.02, weight_decay=0.001)
         model.compile(optimizer=optimizer,
                       loss=tf.keras.losses.SparseCategoricalCrossentropy(),
                       metrics=["accuracy"]
@@ -238,7 +241,7 @@ def main(args):
             result_attempt_dir = f'{result_dir}/Attempt {attempts}'
         else:
             while os.path.isdir(f'{result_dir}/Attempt {attempts}') is True:
-                if len(os.listdir(f'{result_dir}/Attempt {attempts}')) == 0:
+                if len(os.listdir(f'{result_dir}/Attempt {attempts}')) <= 1:
                     rmtree(f'{result_dir}/Attempt {attempts}')
                     break
                 attempts += 1
