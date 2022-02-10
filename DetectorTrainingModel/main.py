@@ -3,8 +3,7 @@ import sys
 import PIL
 import random
 import numpy as np
-from PIL import ImageOps
-from IPython.display import Image, display
+from shutil import rmtree
 from datetime import date
 import matplotlib.pyplot as plt
 import cv2 as cv
@@ -19,9 +18,9 @@ os.environ['DML_VISIBLE_DEVICES'] = '0'
 # Define fold path
 input_dir = "M:/MAI_dataset/tempSamples/degraded/"
 target_dir = "M:/MAI_dataset/tempSamples/mask/"
-valid_img_dir = "M:/MAI_dataset/tempSamples/valid_ST/degraded/"
+valid_img_dir = 'M:/MAI_dataset/Sequence_lines_1/'        # "M:/MAI_dataset/tempSamples/valid_ST/degraded/"
 valid_mask_dir = "M:/MAI_dataset/tempSamples/valid_ST/mask/"
-img_size = (180, 320)  # (273, 640)(180, 320)
+img_size = (360, 640)  # (273, 640)(180, 320)
 num_classes = 2
 batch_size = 2
 
@@ -114,9 +113,10 @@ def get_model(img_size_, num_classes_):
 
 def validation_split(input_img_paths, target_img_paths):
     global batch_size, img_size
-    val_samples = 200
-    random.Random(1200).shuffle(input_img_paths)
-    random.Random(1200).shuffle(target_img_paths)
+    num_of_samples = len(input_img_paths)
+    val_samples = int(num_of_samples * 0.3)
+    random.Random(num_of_samples).shuffle(input_img_paths)
+    random.Random(num_of_samples).shuffle(target_img_paths)
     train_input_img_paths = input_img_paths[:-val_samples]
     train_target_img_paths = target_img_paths[:-val_samples]
     val_input_img_paths = input_img_paths[-val_samples:]
@@ -130,6 +130,7 @@ def validation_split(input_img_paths, target_img_paths):
 def training(train_gen, val_gen, num_classes_, img_size_, use_pretrained, result_attempt_dir, test_gen):
     """Build model"""
     global result_dir
+    # model_path = 'M:/MAI_dataset/TrainedModels/02-03/Attempt 1/generalDegradedDetection.h5'
     model_path = f'{result_attempt_dir}/generalDegradedDetection.h5'
     if use_pretrained:
         model = keras.models.load_model(model_path)
@@ -147,7 +148,7 @@ def training(train_gen, val_gen, num_classes_, img_size_, use_pretrained, result
         callbacks = [
             keras.callbacks.ModelCheckpoint(model_path, save_best_only=True)
         ]
-        epochs = 7
+        epochs = 10
         history = model.fit(train_gen, epochs=epochs, validation_data=val_gen, callbacks=callbacks)
 
         # list all data in history
@@ -176,9 +177,8 @@ def training(train_gen, val_gen, num_classes_, img_size_, use_pretrained, result
         return test_preds
 
 
-def convert_array_to_imgs(result_attempt_dir, input_degraded_img_path, ground_truth_mask_path, test_preds):
+def convert_array_to_imgs(result_attempt_dir, input_degraded_img_path, ground_truth_mask_path, test_preds, if_truemask):
     """Quick utility to display a model's prediction."""
-    from shutil import rmtree
 
     if os.path.isdir(f'{result_attempt_dir}/mask_predictions'):
         rmtree(f'{result_attempt_dir}/mask_predictions')
@@ -190,22 +190,23 @@ def convert_array_to_imgs(result_attempt_dir, input_degraded_img_path, ground_tr
     index = 0
     for (degraded_img_path, mask_ori_path) in zip(input_degraded_img_path, ground_truth_mask_path):
         degraded_img = cv.imread(degraded_img_path)
-        mask_ori = cv.imread(mask_ori_path) * 255
 
         __mask = np.argmax(test_preds[index], axis=-1)
         __mask = np.expand_dims(__mask, axis=-1) * 255
         __mask = __mask * 255
 
         cv.imwrite(f'{result_attempt_dir}/degraded/img{index}.png', degraded_img)
-        cv.imwrite(f'{result_attempt_dir}/mask_predictions/truth{index}.png', mask_ori)
         cv.imwrite(f'{result_attempt_dir}/mask_predictions/pred{index}.png', __mask)
+        if if_truemask:
+            mask_ori = cv.imread(mask_ori_path) * 255
+            cv.imwrite(f'{result_attempt_dir}/mask_predictions/truth{index}.png', mask_ori)
+            cv.imshow(f'Mask_ori', cv.resize(mask_ori, [720, 360]))
+            cv.moveWindow(f'Mask_ori', 2560, 360)
 
         mask_preds = cv.imread(f'{result_attempt_dir}/mask_predictions/pred{index}.png', cv.IMREAD_GRAYSCALE)
         cv.imshow(f'Degraded frame', cv.resize(degraded_img, [720, 360]))
-        cv.imshow(f'Mask_ori', cv.resize(mask_ori, [720, 360]))
         cv.imshow(f'Mask_preds', cv.resize(mask_preds, [720, 360]))
         cv.moveWindow(f'Degraded frame', 2560, 0)
-        cv.moveWindow(f'Mask_ori', 2560, 360)
         cv.moveWindow(f'Mask_preds', 2560, 720)
         cv.waitKey(int(1000 / 10))
 
@@ -228,6 +229,8 @@ def main(args):
     if if_reuse.lower() == 'y':
         if_reuse = True
         result_attempt_dir = f'{result_dir}/Attempt {attempts}'
+        if os.path.isdir(f'{result_attempt_dir}') is False:
+            os.mkdir(f'{result_attempt_dir}')
     else:
         if_reuse = False
         if os.path.isdir(f'{result_dir}/Attempt {attempts}') is False:
@@ -235,13 +238,16 @@ def main(args):
             result_attempt_dir = f'{result_dir}/Attempt {attempts}'
         else:
             while os.path.isdir(f'{result_dir}/Attempt {attempts}') is True:
+                if len(os.listdir(f'{result_dir}/Attempt {attempts}')) == 0:
+                    rmtree(f'{result_dir}/Attempt {attempts}')
+                    break
                 attempts += 1
             os.mkdir(f'{result_dir}/Attempt {attempts}')
             result_attempt_dir = f'{result_dir}/Attempt {attempts}'
 
     test_preds = training(train_gen, val_gen, num_classes, img_size, if_reuse, result_attempt_dir, test_gen)
 
-    convert_array_to_imgs(result_attempt_dir, test_input_img_path, test_target_img_path, test_preds)
+    convert_array_to_imgs(result_attempt_dir, test_input_img_path, test_target_img_path, test_preds, False)
 
 
 if __name__ == '__main__':

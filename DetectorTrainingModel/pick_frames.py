@@ -48,11 +48,15 @@ def sampling_frames(degraded_path, mask_path, name):
     )
     totalFrames = len(frameFiles)
 
-    list_num_of_sample = random.sample(range(3000, totalFrames - 1000), 400)
+    if name == 'ST':
+        list_num_of_sample = random.sample(range(100, totalFrames - 200), 500)
+    else:
+        list_num_of_sample = random.sample(range(3000, totalFrames - 1000), 500)
 
     for num in list_num_of_sample:
         count += 1
-        print(f'Processing: {count} out of 1200.')
+        if count % 200 == 0:
+            print(f'Processing: {count} out of 2000.')
         frame_from_path = frameFiles[num]
         frame_to_path = 'M:/MAI_dataset/tempSamples/degraded/' + 'frame-{:04}'.format(count) + '.png'
         copyfile(frame_from_path, frame_to_path)
@@ -74,7 +78,7 @@ def main(args):
     sampling_frames(ED_DEGRADED, ED_MASK, 'ED')
     sampling_frames(BBB_DEGRADED, BBB_MASK, 'BBB')
     sampling_frames(TOS_DEGRADED, TOS_MASK, 'TOS')
-    # sampling_frames(ST_DEGRADED, ST_MASK, 'ST')
+    sampling_frames(ST_DEGRADED, ST_MASK, 'ST')
 
 
 if __name__ == '__main__':

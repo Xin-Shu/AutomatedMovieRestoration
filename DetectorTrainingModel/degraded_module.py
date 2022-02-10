@@ -11,7 +11,7 @@ from pyopencl.tools import get_test_platforms_and_devices
 os.environ['PYOPENCL_COMPILER_OUTPUT'] = '1'
 os.environ['PYOPENCL_CTX'] = '1'
 cv.ocl.setUseOpenCL(True)
-new_size = (320, 180)
+new_size = (640, 360)
 fps = 120
 
 
@@ -34,7 +34,7 @@ def degraded_module(org_folder, degrade_folder, mask_folder):
         max_width = 3
         # colormap(gray(256));
         scratch_num_list = []
-        line_pos_set, brightness_set = 200, 100
+        line_pos_set, brightness_set = [200, 300, 550], 100
         count = 0
         time_now = time.time()
         for i in range(1, len(pngFiles)):
@@ -49,18 +49,19 @@ def degraded_module(org_folder, degrade_folder, mask_folder):
             binary_mask = np.zeros([rows, cols, 1], 'double')
             degrade = gray_frame
             degrade2 = degrade
-            scratch_num = 1 + random.randint(0, 1)
+            scratch_num = 1 + random.randint(0, 2)
             scratch_num_list.append(scratch_num)
 
             if (i % 100) == 0 or i == len(pngFiles):
-                print(f'Processing: {i} of {len(pngFiles)} -- {pngFiles[i]}: {time.time() - time_now} sec')
                 scratch_num_list = np.array(scratch_num_list)
+                print(f'Processing: {i} of {len(pngFiles)} -- {pngFiles[i]}: {time.time() - time_now} sec, '
+                      f'Number of scrathes (avg): {np.average(scratch_num_list)}')
                 scratch_num_list = []
                 time_now = time.time()
 
-            for line_num in range(1):  # Add randomly up to 4 lines
+            for line_num in range(1, scratch_num + 1):  # Add randomly up to 4 lines
                 # line_pos = random.randint(max_width, cols - 2 * max_width) + max_width + 1
-                line_pos = random.randint(-2, 2) + line_pos_set
+                line_pos = random.randint(-2, 2) + line_pos_set[line_num - 1]
                 w = 1 + random.randint(0, max_width - 1)
                 a = (random.random() * np.sqrt(0.1) + 1) * brightness_set + random.random()
                 if line_pos - w > 0:

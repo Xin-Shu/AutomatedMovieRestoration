@@ -4,7 +4,7 @@ import cv2 as cv
 import numpy as np
 from sklearn.metrics import jaccard_score
 
-result_attempt_dir = 'M:/MAI_dataset/TrainedModels/02-03/Attempt 1'
+result_attempt_dir = 'M:/MAI_dataset/TrainedModels/02-10/Attempt 1'
 
 
 def get_average_accuracy(_dir):
