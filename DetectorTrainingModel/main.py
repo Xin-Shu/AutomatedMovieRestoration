@@ -20,7 +20,7 @@ input_dir = "M:/MAI_dataset/tempSamples/degraded/"
 target_dir = "M:/MAI_dataset/tempSamples/mask/"
 valid_img_dir = 'M:/MAI_dataset/Sequence_lines_1/'        # "M:/MAI_dataset/tempSamples/valid_ST/degraded/"
 valid_mask_dir = "M:/MAI_dataset/tempSamples/valid_ST/mask/"
-img_size = (180, 360)  # (273, 640)(360, 640)
+img_size = (180, 320)  # (273, 640)(360, 640)
 num_classes = 2
 batch_size = 2
 
@@ -114,7 +114,7 @@ def get_model(img_size_, num_classes_):
 def validation_split(input_img_paths, target_img_paths):
     global batch_size, img_size
     num_of_samples = len(input_img_paths)
-    if num_of_samples <= 50:
+    if num_of_samples <= 100:
         val_samples = num_of_samples
     else:
         val_samples = int(num_of_samples * 0.3)
@@ -198,15 +198,15 @@ def convert_array_to_imgs(result_attempt_dir, input_degraded_img_path, ground_tr
         __mask = np.expand_dims(__mask, axis=-1) * 255
         __mask = __mask * 255
 
-        cv.imwrite(f'{result_attempt_dir}/degraded/img{index}.png', degraded_img)
-        cv.imwrite(f'{result_attempt_dir}/mask_predictions/pred{index}.png', __mask)
+        cv.imwrite(f'{result_attempt_dir}/degraded/img{(index + 1):03d}.png', degraded_img)
+        cv.imwrite(f'{result_attempt_dir}/mask_predictions/pred{(index + 1):03d}.png', __mask)
         if if_truemask:
             mask_ori = cv.imread(mask_ori_path) * 255
-            cv.imwrite(f'{result_attempt_dir}/mask_predictions/truth{index}.png', mask_ori)
+            cv.imwrite(f'{result_attempt_dir}/mask_predictions/truth{(index + 1):03d}.png', mask_ori)
             cv.imshow(f'Mask_ori', cv.resize(mask_ori, [720, 360]))
             cv.moveWindow(f'Mask_ori', 2560, 360)
 
-        mask_preds = cv.imread(f'{result_attempt_dir}/mask_predictions/pred{index}.png', cv.IMREAD_GRAYSCALE)
+        mask_preds = cv.imread(f'{result_attempt_dir}/mask_predictions/pred{(index + 1):03d}.png', cv.IMREAD_GRAYSCALE)
         cv.imshow(f'Degraded frame', cv.resize(degraded_img, [720, 360]))
         cv.imshow(f'Mask_preds', cv.resize(mask_preds, [720, 360]))
         cv.moveWindow(f'Degraded frame', 2560, 0)

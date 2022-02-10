@@ -81,8 +81,8 @@ def degraded_module(org_folder, degrade_folder, mask_folder):
                 for n in range(0, rows):
                     profile = makeLineProfile(cols, line_pos, (a - 50), 0.25, slope, n, w)
                     temp = degrade2[n, left_boundary:right_boundary] + profile[left_boundary:right_boundary]
-                    np.place(temp, temp > 255, 255)
-                    np.place(temp, temp < 0, 0)
+                    np.place(temp, temp > 255.0, 255.0)
+                    np.place(temp, temp < 0.0, 0.0)
                     degrade2[n, left_boundary:right_boundary] = temp
 
             degradedFullName = degrade_folder + f'/{count:05d}' + '.png'
