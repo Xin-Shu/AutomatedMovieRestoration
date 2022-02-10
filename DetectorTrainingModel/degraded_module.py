@@ -34,7 +34,7 @@ def degraded_module(org_folder, degrade_folder, mask_folder):
         max_width = 3
         # colormap(gray(256));
         scratch_num_list = []
-
+        line_pos_set = 200
         count = 0
         time_now = time.time()
         for i in range(1, len(pngFiles)):
@@ -49,7 +49,7 @@ def degraded_module(org_folder, degrade_folder, mask_folder):
             binary_mask = np.zeros([rows, cols, 1], 'double')
             degrade = gray_frame
             degrade2 = degrade
-            scratch_num = 1 + random.randint(0, 3)
+            scratch_num = 1 + random.randint(0, 1)
             scratch_num_list.append(scratch_num)
 
             if (i % 100) == 0:
@@ -59,7 +59,8 @@ def degraded_module(org_folder, degrade_folder, mask_folder):
                 time_now = time.time()
 
             for line_num in range(1, scratch_num + 1):  # Add randomly up to 4 lines
-                line_pos = random.randint(max_width, cols - 2 * max_width) + max_width + 1
+                # line_pos = random.randint(max_width, cols - 2 * max_width) + max_width + 1
+                line_pos = random.randint(0, 2) + line_pos_set
                 w = 1 + random.randint(0, max_width - 1)
                 a = random.randint(100, 150)
                 if line_pos - w > 0:
