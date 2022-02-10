@@ -18,8 +18,8 @@ os.environ['DML_VISIBLE_DEVICES'] = '0'
 # Define fold path
 input_dir = "M:/MAI_dataset/tempSamples/degraded/"
 target_dir = "M:/MAI_dataset/tempSamples/mask/"
-valid_img_dir = 'M:/MAI_dataset/Sequence_lines_1/'        # "M:/MAI_dataset/tempSamples/valid_ST/degraded/"
-valid_mask_dir = "M:/MAI_dataset/tempSamples/valid_ST/mask/"
+valid_img_dir = 'M:/MAI_dataset/tempSamples/test_set/cropped'        # "M:/MAI_dataset/tempSamples/valid_ST/degraded/"
+valid_mask_dir = "M:/MAI_dataset/tempSamples/mask/"
 img_size = (180, 320)  # (273, 640)(360, 640)
 num_classes = 2
 batch_size = 2
@@ -133,7 +133,7 @@ def validation_split(input_img_paths, target_img_paths):
 def training(train_gen, val_gen, num_classes_, img_size_, use_pretrained, result_attempt_dir, test_gen):
     """Build model"""
     global result_dir
-    # model_path = 'M:/MAI_dataset/TrainedModels/02-03/Attempt 1/generalDegradedDetection.h5'
+    # model_path = 'M:/MAI_dataset/TrainedModels/02-10/Attempt 3/generalDegradedDetection.h5'
     model_path = f'{result_attempt_dir}/generalDegradedDetection.h5'
     if use_pretrained:
         model = keras.models.load_model(model_path)

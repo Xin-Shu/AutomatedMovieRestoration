@@ -11,7 +11,7 @@ from pyopencl.tools import get_test_platforms_and_devices
 os.environ['PYOPENCL_COMPILER_OUTPUT'] = '1'
 os.environ['PYOPENCL_CTX'] = '1'
 cv.ocl.setUseOpenCL(True)
-new_size = (640, 360)
+new_size = (320, 180)
 fps = 120
 
 
@@ -31,7 +31,7 @@ def degraded_module(org_folder, degrade_folder, mask_folder):
     else:
         pngFiles = [file for file in os.listdir(org_folder) if file.endswith('.png')]
         # Processing images
-        max_width = 3
+        max_width = 5
         # colormap(gray(256));
         scratch_num_list = []
         line_pos_set, brightness_set = [200, 300, 550], 100
@@ -54,7 +54,7 @@ def degraded_module(org_folder, degrade_folder, mask_folder):
 
             if (i % 100) == 0 or i == len(pngFiles):
                 scratch_num_list = np.array(scratch_num_list)
-                print(f'Processing: {i} of {len(pngFiles)} -- {pngFiles[i]}: {time.time() - time_now} sec, '
+                print(f'Processing: {i} of {len(pngFiles)} -- {pngFiles[i]}: {(time.time() - time_now):04f} sec, '
                       f'Number of scrathes (avg): {np.average(scratch_num_list)}')
                 scratch_num_list = []
                 time_now = time.time()
@@ -62,7 +62,7 @@ def degraded_module(org_folder, degrade_folder, mask_folder):
             for line_num in range(1, scratch_num + 1):  # Add randomly up to 4 lines
                 # line_pos = random.randint(max_width, cols - 2 * max_width) + max_width + 1
                 line_pos = random.randint(-2, 2) + line_pos_set[line_num - 1]
-                w = 1 + random.randint(0, max_width - 1)
+                w = 1 + random.randint(2, max_width - 1)
                 a = (random.random() * np.sqrt(0.1) + 1) * brightness_set + random.random()
                 if line_pos - w > 0:
                     left_boundary = line_pos - int(np.floor(w / 2))
