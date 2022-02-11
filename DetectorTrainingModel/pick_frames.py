@@ -1,26 +1,22 @@
 import os
 import sys
 import random
-
-import pyopencl as cl
+from tqdm import tqdm
 from shutil import copyfile
+
 os.environ['PYOPENCL_COMPILER_OUTPUT'] = '1'
 os.environ['PYOPENCL_CTX'] = '1'
 
 # Elephents Dream
-ED_ORG = 'M:/MAI_dataset/Origin_set/ED-360-png/'
 ED_DEGRADED = 'M:/MAI_dataset/Degraded_set/ED/frame/'
 ED_MASK = 'M:/MAI_dataset/Degraded_set/ED/mask/'
 # Big Buck Bunny
-BBB_ORG = 'M:/MAI_dataset/Origin_set/BBB-360-png/'
 BBB_DEGRADED = 'M:/MAI_dataset/Degraded_set/BBB/frame/'
 BBB_MASK = 'M:/MAI_dataset/Degraded_set/BBB/mask/'
 # Tear of Steel
-TOS_ORG = 'M:/MAI_dataset/Origin_set/TOS-1080-png/'
 TOS_DEGRADED = 'M:/MAI_dataset/Degraded_set/TOS/frame/'
 TOS_MASK = 'M:/MAI_dataset/Degraded_set/TOS/mask/'
 # Sintel Trailer
-ST_ORG = 'M:/MAI_dataset/Origin_set/ST-720-png/'
 ST_DEGRADED = 'M:/MAI_dataset/Degraded_set/ST/frame/'
 ST_MASK = 'M:/MAI_dataset/Degraded_set/ST/mask/'
 
@@ -49,21 +45,33 @@ def sampling_frames(degraded_path, mask_path, name):
     totalFrames = len(frameFiles)
 
     if name == 'ST':
+        count_st = 0
         list_num_of_sample = random.sample(range(100, totalFrames - 200), 500)
+        print(f'\nProcessing validation set [{name}]: '
+              f'randomly pick {len(list_num_of_sample)} from {totalFrames} frames.')
+        for num in tqdm(list_num_of_sample, bar_format='{percentage:3.0f}%|{bar:100}{r_bar}'):
+            count_st += 1
+            frame_from_path = frameFiles[num]
+            frame_to_path = 'M:/MAI_dataset/tempSamples/valid_set/frame/' + 'frame-{:04}'.format(count_st) + '.png'
+            copyfile(frame_from_path, frame_to_path)
+
+            mask_from_path = maskFiles[num]
+            mask_to_path = 'M:/MAI_dataset/tempSamples/valid_set/mask/' + 'frame-{:04}'.format(count_st) + '.png'
+            copyfile(mask_from_path, mask_to_path)
+
     else:
         list_num_of_sample = random.sample(range(3000, totalFrames - 1000), 500)
+        print(f'\nProcessing training set [{name}]: '
+              f'randomly pick {len(list_num_of_sample)} from {totalFrames} frames.')
+        for num in tqdm(list_num_of_sample, bar_format='{percentage:3.0f}%|{bar:100}{r_bar}'):
+            count += 1
+            frame_from_path = frameFiles[num]
+            frame_to_path = 'M:/MAI_dataset/tempSamples/degraded/' + 'frame-{:04}'.format(count) + '.png'
+            copyfile(frame_from_path, frame_to_path)
 
-    for num in list_num_of_sample:
-        count += 1
-        if count % 200 == 0:
-            print(f'Processing: {count} out of 2000.')
-        frame_from_path = frameFiles[num]
-        frame_to_path = 'M:/MAI_dataset/tempSamples/degraded/' + 'frame-{:04}'.format(count) + '.png'
-        copyfile(frame_from_path, frame_to_path)
-
-        mask_from_path = maskFiles[num]
-        mask_to_path = 'M:/MAI_dataset/tempSamples/mask/' + 'frame-{:04}'.format(count) + '.png'
-        copyfile(mask_from_path, mask_to_path)
+            mask_from_path = maskFiles[num]
+            mask_to_path = 'M:/MAI_dataset/tempSamples/mask/' + 'frame-{:04}'.format(count) + '.png'
+            copyfile(mask_from_path, mask_to_path)
 
 
 def main(args):
@@ -74,6 +82,10 @@ def main(args):
         os.mkdir('M:/MAI_dataset/tempSamples/degraded/')
         rmtree('M:/MAI_dataset/tempSamples/mask/')
         os.mkdir('M:/MAI_dataset/tempSamples/mask/')
+        rmtree('M:/MAI_dataset/tempSamples/valid_set/')
+        os.mkdir('M:/MAI_dataset/tempSamples/valid_set/')
+        os.mkdir('M:/MAI_dataset/tempSamples/valid_set/frame')
+        os.mkdir('M:/MAI_dataset/tempSamples/valid_set/mask')
 
     sampling_frames(ED_DEGRADED, ED_MASK, 'ED')
     sampling_frames(BBB_DEGRADED, BBB_MASK, 'BBB')

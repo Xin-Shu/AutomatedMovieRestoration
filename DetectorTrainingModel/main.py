@@ -18,8 +18,10 @@ os.environ['DML_VISIBLE_DEVICES'] = '0'
 # Define fold path
 input_dir = "M:/MAI_dataset/tempSamples/degraded/"
 target_dir = "M:/MAI_dataset/tempSamples/mask/"
-valid_img_dir = 'M:/MAI_dataset/tempSamples/test_set/cropped'        # "M:/MAI_dataset/tempSamples/valid_ST/degraded/"
-valid_mask_dir = "M:/MAI_dataset/tempSamples/mask/"
+valid_img_dir = 'M:/MAI_dataset/tempSamples/valid_set/frame'
+valid_mask_dir = "M:/MAI_dataset/tempSamples/valid_set/mask/"
+test_img_dir = 'M:/MAI_dataset/tempSamples/test_set/cropped'
+test_mask_dir = "M:/MAI_dataset/tempSamples/mask/"
 img_size = (180, 320)  # (273, 640)(360, 640)
 num_classes = 2
 batch_size = 2
@@ -143,7 +145,7 @@ def training(train_gen, val_gen, num_classes_, img_size_, use_pretrained, result
         # Build model
         model = get_model(img_size_, num_classes)
         model.summary()
-        optimizer = tf.contrib.opt.AdamWOptimizer(learning_rate=0.02, weight_decay=0.001)
+        optimizer = tf.contrib.opt.AdamWOptimizer(learning_rate=0.01, weight_decay=0.0001)
         model.compile(optimizer=optimizer,
                       loss=tf.keras.losses.SparseCategoricalCrossentropy(),
                       metrics=["accuracy"]
@@ -207,8 +209,8 @@ def convert_array_to_imgs(result_attempt_dir, input_degraded_img_path, ground_tr
             cv.moveWindow(f'Mask_ori', 2560, 360)
 
         mask_preds = cv.imread(f'{result_attempt_dir}/mask_predictions/pred{(index + 1):03d}.png', cv.IMREAD_GRAYSCALE)
-        cv.imshow(f'Degraded frame', cv.resize(degraded_img, [720, 360]))
-        cv.imshow(f'Mask_preds', cv.resize(mask_preds, [720, 360]))
+        cv.imshow(f'Degraded frame', cv.resize(degraded_img, [1440, 720]))
+        cv.imshow(f'Mask_preds', cv.resize(mask_preds, [1440, 720]))
         cv.moveWindow(f'Degraded frame', 2560, 0)
         cv.moveWindow(f'Mask_preds', 2560, 720)
         cv.waitKey(int(1000 / 10))
@@ -223,8 +225,11 @@ def main(args):
 
     input_img_paths, target_img_paths = load_dataset_path(input_dir, target_dir)
     valid_img, valid_mask = load_dataset_path(valid_img_dir, valid_mask_dir)
-    train_gen, val_gen, val_input_img_paths, val_target_img_paths = validation_split(input_img_paths, target_img_paths)
-    _, test_gen, test_input_img_path, test_target_img_path = validation_split(valid_img, valid_mask)
+    test_img, test_mask = load_dataset_path(test_img_dir, test_mask_dir)
+
+    train_gen, _, _, _ = validation_split(input_img_paths, target_img_paths)
+    _, val_gen, _, _ = validation_split(input_img_paths, target_img_paths)
+    _, test_gen, test_input_img_path, test_target_img_path = validation_split(test_img, test_mask)
 
     '''Free up RAM in case the model definition cells were run multiple times'''
     keras.backend.clear_session()

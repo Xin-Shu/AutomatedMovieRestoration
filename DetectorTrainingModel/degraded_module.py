@@ -5,7 +5,7 @@ import time
 import random
 import cv2 as cv
 import numpy as np
-import pyopencl as cl
+from tqdm import tqdm
 from pyopencl.tools import get_test_platforms_and_devices
 
 os.environ['PYOPENCL_COMPILER_OUTPUT'] = '1'
@@ -22,7 +22,12 @@ def makeLineProfile(cols, pos, amplitude, damping, m, row, w):
     return profile
 
 
-def degraded_module(org_folder, degrade_folder, mask_folder):
+def degraded_module(name, resol):
+
+    org_folder = f'M:/MAI_dataset/Origin_set/{resol}-png'
+    degrade_folder = f'M:/MAI_dataset/Degraded_set/{name}/frame'
+    mask_folder = f'M:/MAI_dataset/Degraded_set/{name}/mask'
+
     if os.path.isdir(org_folder) is False:
         import warnings
         errorMessage = f'Error: The following folder does not exist:\n%s', org_folder
@@ -34,10 +39,11 @@ def degraded_module(org_folder, degrade_folder, mask_folder):
         max_width = 5
         # colormap(gray(256));
         scratch_num_list = []
-        line_pos_set, brightness_set = [200, 300, 550], 100
+        line_pos_set, brightness_set = [50, 150, 270], 60
         count = 0
         time_now = time.time()
-        for i in range(1, len(pngFiles)):
+        print(f'\nProcessing filme [{name}], {len(pngFiles)} frames in total')
+        for i in tqdm(range(1, len(pngFiles)), bar_format='{percentage:3.0f}%|{bar:100}{r_bar}'):
             count += 1
             frameName = org_folder + f'/{pngFiles[i]}'
 
@@ -52,18 +58,18 @@ def degraded_module(org_folder, degrade_folder, mask_folder):
             scratch_num = 1 + random.randint(0, 2)
             scratch_num_list.append(scratch_num)
 
-            if (i % 100) == 0 or i == len(pngFiles):
-                scratch_num_list = np.array(scratch_num_list)
-                print(f'Processing: {i} of {len(pngFiles)} -- {pngFiles[i]}: {(time.time() - time_now):04f} sec, '
-                      f'Number of scrathes (avg): {np.average(scratch_num_list)}')
-                scratch_num_list = []
-                time_now = time.time()
+            # if (i % 100) == 0 or i == len(pngFiles):
+            #     scratch_num_list = np.array(scratch_num_list)
+            #     print(f'Processing: {i} of {len(pngFiles)} -- {pngFiles[i]}: {(time.time() - time_now):04f} sec, '
+            #           f'Number of scrathes (avg): {np.average(scratch_num_list)}')
+            #     scratch_num_list = []
+            #     time_now = time.time()
 
             for line_num in range(1, scratch_num + 1):  # Add randomly up to 4 lines
                 # line_pos = random.randint(max_width, cols - 2 * max_width) + max_width + 1
                 line_pos = random.randint(-2, 2) + line_pos_set[line_num - 1]
-                w = 1 + random.randint(2, max_width - 1)
-                a = (random.random() * np.sqrt(0.1) + 1) * brightness_set + random.random()
+                w = 1 + random.randint(3, max_width)
+                a = (random.uniform(-1, 1) * np.sqrt(0.1) + 1) * brightness_set + random.random()
                 if line_pos - w > 0:
                     left_boundary = line_pos - int(np.floor(w / 2))
                 else:
@@ -77,7 +83,7 @@ def degraded_module(org_folder, degrade_folder, mask_folder):
                 scratch_width = right_boundary - left_boundary
 
                 binary_mask[:, left_boundary:right_boundary] = 1
-                slope = random.randint(-10, 10) * 0.0010
+                slope = random.uniform(-1, 1) * 0.0010
                 for n in range(0, rows):
                     profile = makeLineProfile(cols, line_pos, (a - 50), 0.25, slope, n, w)
                     temp = degrade2[n, left_boundary:right_boundary] + profile[left_boundary:right_boundary]
@@ -90,20 +96,17 @@ def degraded_module(org_folder, degrade_folder, mask_folder):
             cv.imwrite(degradedFullName, degrade2)
             cv.imwrite(maskFullName, binary_mask)
 
-            cv.imshow(f'Degraded frame', cv.resize(degrade2, [720, 360]))
-            cv.imshow(f'Mask', cv.resize(binary_mask, [720, 360]))
+            cv.imshow(f'Degraded frame', cv.resize(degrade2, [960, 540]))
+            cv.imshow(f'Mask', cv.resize(binary_mask, [960, 540]))
             cv.moveWindow(f'Degraded frame', 2560, 0)
-            cv.moveWindow(f'Mask', 2560, 361)
+            cv.moveWindow(f'Mask', 2560, 541)
             cv.waitKey(1)
 
 
 def main(args):
     film_name = [['ST', 'ST(cut)-720'], ['BBB', 'BBB-360'], ['ED', 'ED-360'], ['TOS', 'TOS-1080']]
     for name, resol in film_name:
-        org_folder = f'M:/MAI_dataset/Origin_set/{resol}-png'
-        degrade_folder = f'M:/MAI_dataset/Degraded_set/{name}/frame'
-        mask_folder = f'M:/MAI_dataset/Degraded_set/{name}/mask'
-        degraded_module(org_folder, degrade_folder, mask_folder)
+        degraded_module(name, resol)
         print(f'INFO: Finished picture processing of film: {name}!')
 
 
