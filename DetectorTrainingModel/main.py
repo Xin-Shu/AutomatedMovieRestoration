@@ -18,9 +18,9 @@ os.environ['DML_VISIBLE_DEVICES'] = '0'
 # Define fold path
 input_dir = "M:/MAI_dataset/tempSamples/degraded/"
 target_dir = "M:/MAI_dataset/tempSamples/mask/"
-valid_img_dir = 'M:/MAI_dataset/tempSamples/valid_set/frame'
+valid_img_dir = 'M:/MAI_dataset/tempSamples/valid_set/frame/'
 valid_mask_dir = "M:/MAI_dataset/tempSamples/valid_set/mask/"
-test_img_dir = 'M:/MAI_dataset/tempSamples/test_set/cropped'
+test_img_dir = 'M:/MAI_dataset/tempSamples/test_set/cropped/'
 test_mask_dir = "M:/MAI_dataset/tempSamples/mask/"
 img_size = (180, 320)  # (273, 640)(360, 640)
 num_classes = 2
@@ -135,10 +135,11 @@ def validation_split(input_img_paths, target_img_paths):
 def training(train_gen, val_gen, num_classes_, img_size_, use_pretrained, result_attempt_dir, test_gen):
     """Build model"""
     global result_dir
-    # model_path = 'M:/MAI_dataset/TrainedModels/02-10/Attempt 3/generalDegradedDetection.h5'
     model_path = f'{result_attempt_dir}/generalDegradedDetection.h5'
     if use_pretrained:
-        model = keras.models.load_model(model_path)
+        model_path = 'M:/MAI_dataset/TrainedModels/02-14/Attempt 2/generalDegradedDetection.h5'
+        print(f'INFO: Using pre-trained model from: {model_path}')
+        model = keras.models.load_model(model_path, compile=False)
         test_preds = model.predict(test_gen)
         return test_preds
     else:
@@ -153,29 +154,31 @@ def training(train_gen, val_gen, num_classes_, img_size_, use_pretrained, result
         callbacks = [
             keras.callbacks.ModelCheckpoint(model_path, save_best_only=True)
         ]
-        epochs = 10
+        epochs = 50
         history = model.fit(train_gen, epochs=epochs, validation_data=val_gen, callbacks=callbacks)
 
         # list all data in history
         print(history.history.keys())
+
         # summarize history for accuracy
-        # plt.plot(history.history['acc'])
-        # plt.plot(history.history['val_acc'])
-        # plt.title('model accuracy')
-        # plt.ylabel('accuracy')
-        # plt.xlabel('epoch')
-        # plt.legend(['train', 'test'], loc='upper left')
+        fig1 = plt.figure(figsize=(8, 6))
+        plt.title("Training history - Accuracy", fontsize=20)
+        plt.plot(history.history['acc'])
+        plt.plot(history.history['val_acc'])
+        plt.ylabel('accuracy')
+        plt.xlabel('epoch')
+        plt.legend(['train', 'test'], loc='upper left')
+        plt.savefig(f'{result_attempt_dir}/val_acc_plot.png', )
 
         # summarize history for loss
-        fig1 = plt.figure(figsize=(8, 6))
-        plt.title("ROC plot of classifiers", fontsize=20)
+        fig2 = plt.figure(figsize=(8, 6))
+        plt.title("Training history - Loss", fontsize=20)
         plt.plot(history.history['loss'])
         plt.plot(history.history['val_loss'])
-        plt.title('model loss')
         plt.ylabel('loss')
         plt.xlabel('epoch')
         plt.legend(['train', 'test'], loc='upper right')
-        plt.savefig(f'{result_attempt_dir}/val_loss_acc_plot.png', )
+        plt.savefig(f'{result_attempt_dir}/val_loss_plot.png', )
         plt.show()
 
         test_preds = model.predict(test_gen)
@@ -193,8 +196,10 @@ def convert_array_to_imgs(result_attempt_dir, input_degraded_img_path, ground_tr
     os.mkdir(f'{result_attempt_dir}/degraded')
 
     index = 0
+    print(f'INFO: Predictions saved in the following path: {result_attempt_dir}/degraded/')
     for (degraded_img_path, mask_ori_path) in zip(input_degraded_img_path, ground_truth_mask_path):
         degraded_img = cv.imread(degraded_img_path)
+        degraded_img = cv.resize(degraded_img, [320, 180])
 
         __mask = np.argmax(test_preds[index], axis=-1)
         __mask = np.expand_dims(__mask, axis=-1) * 255
@@ -213,7 +218,7 @@ def convert_array_to_imgs(result_attempt_dir, input_degraded_img_path, ground_tr
         cv.imshow(f'Mask_preds', cv.resize(mask_preds, [1440, 720]))
         cv.moveWindow(f'Degraded frame', 2560, 0)
         cv.moveWindow(f'Mask_preds', 2560, 720)
-        cv.waitKey(int(1000 / 10))
+        cv.waitKey(1)
 
         index += 1
 

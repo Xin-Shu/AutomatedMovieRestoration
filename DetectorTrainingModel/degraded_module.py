@@ -39,7 +39,7 @@ def degraded_module(name, resol):
         max_width = 5
         # colormap(gray(256));
         scratch_num_list = []
-        line_pos_set, brightness_set = [50, 150, 270], 60
+        line_pos_set, brightness_set = [50, 150, 270], 50
         count = 0
         time_now = time.time()
         print(f'\nProcessing filme [{name}], {len(pngFiles)} frames in total')
@@ -64,12 +64,15 @@ def degraded_module(name, resol):
             #           f'Number of scrathes (avg): {np.average(scratch_num_list)}')
             #     scratch_num_list = []
             #     time_now = time.time()
-
+            temp_brightness = brightness_set
             for line_num in range(1, scratch_num + 1):  # Add randomly up to 4 lines
                 # line_pos = random.randint(max_width, cols - 2 * max_width) + max_width + 1
-                line_pos = random.randint(-2, 2) + line_pos_set[line_num - 1]
-                w = 1 + random.randint(3, max_width)
-                a = (random.uniform(-1, 1) * np.sqrt(0.1) + 1) * brightness_set + random.random()
+                line_pos = random.randint(-1, 1) + line_pos_set[line_num - 1]
+                w = 2 + random.randrange(1, max_width + 2, 2)
+                a = (random.uniform(-2, 2) * np.sqrt(0.1) + 1) * temp_brightness + random.uniform(-1, 1)
+                temp_brightness = a
+                if temp_brightness >= 130 or temp_brightness <= 20:
+                    temp_brightness = brightness_set
                 if line_pos - w > 0:
                     left_boundary = line_pos - int(np.floor(w / 2))
                 else:
@@ -82,11 +85,11 @@ def degraded_module(name, resol):
                     right_boundary = left_boundary + 1
                 scratch_width = right_boundary - left_boundary
 
-                binary_mask[:, left_boundary:right_boundary] = 1
+                binary_mask[:, left_boundary + 1:right_boundary - 1] = 1
                 slope = random.uniform(-1, 1) * 0.0010
                 for n in range(0, rows):
                     profile = makeLineProfile(cols, line_pos, (a - 50), 0.25, slope, n, w)
-                    temp = degrade2[n, left_boundary:right_boundary] + profile[left_boundary:right_boundary]
+                    temp = degrade2[n, left_boundary:right_boundary] + profile[left_boundary:right_boundary] * 0.2
                     np.place(temp, temp > 255.0, 255.0)
                     np.place(temp, temp < 0.0, 0.0)
                     degrade2[n, left_boundary:right_boundary] = temp
@@ -98,8 +101,8 @@ def degraded_module(name, resol):
 
             cv.imshow(f'Degraded frame', cv.resize(degrade2, [960, 540]))
             cv.imshow(f'Mask', cv.resize(binary_mask, [960, 540]))
-            cv.moveWindow(f'Degraded frame', 2560, 0)
-            cv.moveWindow(f'Mask', 2560, 541)
+            cv.moveWindow(f'Degraded frame', 1000, 0)
+            cv.moveWindow(f'Mask', 1000, 541)
             cv.waitKey(1)
 
 

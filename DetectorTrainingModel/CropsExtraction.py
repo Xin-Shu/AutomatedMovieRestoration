@@ -27,7 +27,7 @@ def crop_img(input_path_, output_path_):
             for j in range(0, 6):
                 topleft_x, topleft_y = i * 320, j * 180
                 crop = input_img[topleft_y:topleft_y+180, topleft_x:topleft_x + 320]
-                cv.imwrite(f'{output_path_}frame{count_frame}-{i + 1}-{j + 1}.png', crop)
+                cv.imwrite(f'{output_path_}frame-{count_frame}-{i + 1}-{j + 1}.png', crop)
         if (count_frame % 10) == 0 or count_frame == len(input_img_paths):
             print(f'Finished cropping frame {count_frame} out of {len(input_img_paths)} frames'
                   f': {(time.time() - time_now):04f} sec')
