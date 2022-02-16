@@ -7,18 +7,31 @@ from shutil import copyfile
 os.environ['PYOPENCL_COMPILER_OUTPUT'] = '1'
 os.environ['PYOPENCL_CTX'] = '1'
 
+# # Elephents Dream
+# ED_DEGRADED = 'M:/MAI_dataset/Degraded_set/ED/frame/'
+# ED_MASK = 'M:/MAI_dataset/Degraded_set/ED/mask/'
+# # Big Buck Bunny
+# BBB_DEGRADED = 'M:/MAI_dataset/Degraded_set/BBB/frame/'
+# BBB_MASK = 'M:/MAI_dataset/Degraded_set/BBB/mask/'
+# # Tear of Steel
+# TOS_DEGRADED = 'M:/MAI_dataset/Degraded_set/TOS/frame/'
+# TOS_MASK = 'M:/MAI_dataset/Degraded_set/TOS/mask/'
+# # Sintel Trailer
+# ST_DEGRADED = 'M:/MAI_dataset/Degraded_set/ST/frame/'
+# ST_MASK = 'M:/MAI_dataset/Degraded_set/ST/mask/'
+
 # Elephents Dream
-ED_DEGRADED = 'M:/MAI_dataset/Degraded_set/ED/frame/'
-ED_MASK = 'M:/MAI_dataset/Degraded_set/ED/mask/'
+ED_DEGRADED = 'M:/MAI_dataset/Degraded_set/VA-ED/frame/'
+ED_MASK = 'M:/MAI_dataset/Degraded_set/VA-ED/mask/'
 # Big Buck Bunny
-BBB_DEGRADED = 'M:/MAI_dataset/Degraded_set/BBB/frame/'
-BBB_MASK = 'M:/MAI_dataset/Degraded_set/BBB/mask/'
+BBB_DEGRADED = 'M:/MAI_dataset/Degraded_set/VA-BBB/frame/'
+BBB_MASK = 'M:/MAI_dataset/Degraded_set/VA-BBB/mask/'
 # Tear of Steel
-TOS_DEGRADED = 'M:/MAI_dataset/Degraded_set/TOS/frame/'
-TOS_MASK = 'M:/MAI_dataset/Degraded_set/TOS/mask/'
+TOS_DEGRADED = 'M:/MAI_dataset/Degraded_set/VA-TOS/frame/'
+TOS_MASK = 'M:/MAI_dataset/Degraded_set/VA-TOS/mask/'
 # Sintel Trailer
-ST_DEGRADED = 'M:/MAI_dataset/Degraded_set/ST/frame/'
-ST_MASK = 'M:/MAI_dataset/Degraded_set/ST/mask/'
+ST_DEGRADED = 'M:/MAI_dataset/Degraded_set/VA-ST/frame/'
+ST_MASK = 'M:/MAI_dataset/Degraded_set/VA-ST/mask/'
 
 count = 0
 
@@ -66,11 +79,11 @@ def sampling_frames(degraded_path, mask_path, name):
         for num in tqdm(list_num_of_sample, bar_format='{percentage:3.0f}%|{bar:100}{r_bar}'):
             count += 1
             frame_from_path = frameFiles[num]
-            frame_to_path = 'M:/MAI_dataset/tempSamples/degraded/' + 'frame-{:04}'.format(count) + '.png'
+            frame_to_path = 'M:/MAI_dataset/tempSamples/train_set/degraded/' + 'frame-{:04}'.format(count) + '.png'
             copyfile(frame_from_path, frame_to_path)
 
             mask_from_path = maskFiles[num]
-            mask_to_path = 'M:/MAI_dataset/tempSamples/mask/' + 'frame-{:04}'.format(count) + '.png'
+            mask_to_path = 'M:/MAI_dataset/tempSamples/train_set/mask/' + 'frame-{:04}'.format(count) + '.png'
             copyfile(mask_from_path, mask_to_path)
 
 
@@ -78,10 +91,10 @@ def main(args):
     reset = True
     if reset is True:
         from shutil import rmtree
-        rmtree('M:/MAI_dataset/tempSamples/degraded/')
-        os.mkdir('M:/MAI_dataset/tempSamples/degraded/')
-        rmtree('M:/MAI_dataset/tempSamples/mask/')
-        os.mkdir('M:/MAI_dataset/tempSamples/mask/')
+        rmtree('M:/MAI_dataset/tempSamples/train_set/degraded/')
+        os.mkdir('M:/MAI_dataset/tempSamples/train_set/degraded/')
+        rmtree('M:/MAI_dataset/tempSamples/train_set/mask/')
+        os.mkdir('M:/MAI_dataset/tempSamples/train_set/mask/')
         rmtree('M:/MAI_dataset/tempSamples/valid_set/')
         os.mkdir('M:/MAI_dataset/tempSamples/valid_set/')
         os.mkdir('M:/MAI_dataset/tempSamples/valid_set/frame')

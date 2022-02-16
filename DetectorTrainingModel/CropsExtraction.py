@@ -1,8 +1,9 @@
 import os
-import time
 import glob
 
 import cv2 as cv
+import numpy as np
+from tqdm import tqdm
 from shutil import rmtree
 ''' 
 This script is for extracting small crops from a large image, e.g. 1280×720 and higher resolutions.
@@ -11,6 +12,7 @@ The aim of adding this script is to make better predictions over large input ima
 '''
 
 adjust_size = (1920, 1080)
+out_size = (480, 270)
 input_path = 'M:/MAI_dataset/Sequence_lines_1'
 output_path = 'M:/MAI_dataset/tempSamples/test_set/cropped/'
 
@@ -18,20 +20,26 @@ output_path = 'M:/MAI_dataset/tempSamples/test_set/cropped/'
 def crop_img(input_path_, output_path_):
     input_img_paths = glob.glob(f'{input_path_}/*.bmp')
     count_frame = 0
-    time_now = time.time()
-    for p in input_img_paths:
+    for index in tqdm(range(1, len(input_img_paths) - 1), bar_format='{percentage:3.0f}%|{bar:100}{r_bar}'):
         count_frame += 1
-        input_img = cv.imread(p)
-        input_img = cv.resize(input_img, adjust_size)
+        input_img1 = cv.imread(input_img_paths[index - 1])
+        input_img1 = cv.resize(input_img1, adjust_size)
+        input_img2 = cv.imread(input_img_paths[index])
+        input_img2 = cv.resize(input_img2, adjust_size)
+        input_img3 = cv.imread(input_img_paths[index + 1])
+        input_img3 = cv.resize(input_img3, adjust_size)
+
         for i in range(0, 6):
             for j in range(0, 6):
+
                 topleft_x, topleft_y = i * 320, j * 180
-                crop = input_img[topleft_y:topleft_y+180, topleft_x:topleft_x + 320]
-                cv.imwrite(f'{output_path_}frame-{count_frame}-{i + 1}-{j + 1}.png', crop)
-        if (count_frame % 10) == 0 or count_frame == len(input_img_paths):
-            print(f'Finished cropping frame {count_frame} out of {len(input_img_paths)} frames'
-                  f': {(time.time() - time_now):04f} sec')
-            time_now = time.time()
+
+                crop1 = input_img1[topleft_y:topleft_y + 180, topleft_x:topleft_x + 320]
+                crop2 = input_img2[topleft_y:topleft_y + 180, topleft_x:topleft_x + 320]
+                crop3 = input_img3[topleft_y:topleft_y + 180, topleft_x:topleft_x + 320]
+                crop_vertical_3 = np.concatenate((crop1, crop2, crop3), axis=0)
+                crop_vertical_3 = cv.resize(crop_vertical_3, out_size)
+                cv.imwrite(f'{output_path_}frame{count_frame}-{i + 1}-{j + 1}.png', crop_vertical_3)
 
 
 if __name__ == '__main__':

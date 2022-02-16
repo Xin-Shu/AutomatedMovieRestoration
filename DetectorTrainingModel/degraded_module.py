@@ -58,16 +58,15 @@ def degraded_module(name, resol):
             scratch_num = 1 + random.randint(0, 2)
             scratch_num_list.append(scratch_num)
 
-            # if (i % 100) == 0 or i == len(pngFiles):
-            #     scratch_num_list = np.array(scratch_num_list)
-            #     print(f'Processing: {i} of {len(pngFiles)} -- {pngFiles[i]}: {(time.time() - time_now):04f} sec, '
-            #           f'Number of scrathes (avg): {np.average(scratch_num_list)}')
-            #     scratch_num_list = []
-            #     time_now = time.time()
             temp_brightness = brightness_set
+            temp_line_pos_set = line_pos_set
             for line_num in range(1, scratch_num + 1):  # Add randomly up to 4 lines
                 # line_pos = random.randint(max_width, cols - 2 * max_width) + max_width + 1
-                line_pos = random.randint(-1, 1) + line_pos_set[line_num - 1]
+                line_pos = random.randint(-1, 1) + temp_line_pos_set[line_num - 1]
+                if line_pos >= 320 or line_pos <= 0:
+                    temp_line_pos_set = line_pos_set
+                else:
+                    temp_line_pos_set[line_num - 1] = line_pos
                 w = 2 + random.randrange(1, max_width + 2, 2)
                 a = (random.uniform(-2, 2) * np.sqrt(0.1) + 1) * temp_brightness + random.uniform(-1, 1)
                 temp_brightness = a
@@ -86,7 +85,7 @@ def degraded_module(name, resol):
                 scratch_width = right_boundary - left_boundary
 
                 binary_mask[:, left_boundary + 1:right_boundary - 1] = 1
-                slope = random.uniform(-1, 1) * 0.0010
+                slope = random.uniform(-1, 1) * 0.0001
                 for n in range(0, rows):
                     profile = makeLineProfile(cols, line_pos, (a - 50), 0.25, slope, n, w)
                     temp = degrade2[n, left_boundary:right_boundary] + profile[left_boundary:right_boundary] * 0.2

@@ -16,13 +16,13 @@ from tensorflow.keras.preprocessing.image import load_img
 os.environ['DML_VISIBLE_DEVICES'] = '0'
 
 # Define fold path
-input_dir = "M:/MAI_dataset/tempSamples/degraded/"
-target_dir = "M:/MAI_dataset/tempSamples/mask/"
+input_dir = "M:/MAI_dataset/tempSamples/train_set/degraded/"
+target_dir = "M:/MAI_dataset/tempSamples/train_set/mask/"
 valid_img_dir = 'M:/MAI_dataset/tempSamples/valid_set/frame/'
 valid_mask_dir = "M:/MAI_dataset/tempSamples/valid_set/mask/"
 test_img_dir = 'M:/MAI_dataset/tempSamples/test_set/cropped/'
-test_mask_dir = "M:/MAI_dataset/tempSamples/mask/"
-img_size = (180, 320)  # (273, 640)(360, 640)
+test_mask_dir = "M:/MAI_dataset/tempSamples/train_set/mask/"
+img_size = (189, 336)   # np.multiply((270, 480), 0.8).astype(int)  # (270, 480)(360, 640)(180, 320)(189, 336)
 num_classes = 2
 batch_size = 2
 
@@ -188,37 +188,39 @@ def training(train_gen, val_gen, num_classes_, img_size_, use_pretrained, result
 def convert_array_to_imgs(result_attempt_dir, input_degraded_img_path, ground_truth_mask_path, test_preds, if_truemask):
     """Quick utility to display a model's prediction."""
 
-    if os.path.isdir(f'{result_attempt_dir}/mask_predictions'):
-        rmtree(f'{result_attempt_dir}/mask_predictions')
+    if os.path.isdir(f'{result_attempt_dir}/pred_over_ori'):
+        rmtree(f'{result_attempt_dir}/pred_over_ori')
+    if os.path.isdir(f'{result_attempt_dir}/mask'):
+        rmtree(f'{result_attempt_dir}/mask')
     if os.path.isdir(f'{result_attempt_dir}/degraded'):
         rmtree(f'{result_attempt_dir}/degraded')
-    os.mkdir(f'{result_attempt_dir}/mask_predictions')
+    os.mkdir(f'{result_attempt_dir}/pred_over_ori')
+    os.mkdir(f'{result_attempt_dir}/mask')
     os.mkdir(f'{result_attempt_dir}/degraded')
 
     index = 0
     print(f'INFO: Predictions saved in the following path: {result_attempt_dir}/degraded/')
     for (degraded_img_path, mask_ori_path) in zip(input_degraded_img_path, ground_truth_mask_path):
         degraded_img = cv.imread(degraded_img_path)
-        degraded_img = cv.resize(degraded_img, [320, 180])
+        degraded_img = cv.resize(degraded_img, [img_size[1], img_size[0]])
 
         __mask = np.argmax(test_preds[index], axis=-1)
-        __mask = np.expand_dims(__mask, axis=-1) * 255
-        __mask = __mask * 255
+        __mask = np.expand_dims(__mask, axis=-1)
 
+        mask_over_ori = cv.cvtColor(degraded_img, cv.COLOR_GRAY2RGB)
+        mask_over_ori[:, :, 0] = np.clip((mask_over_ori[:, :, 0] - __mask * 150), 0.0, 255.0)
+        mask_over_ori[:, :, 1] = np.clip((mask_over_ori[:, :, 1] - __mask * 150), 0.0, 255.0)
+        mask_over_ori[:, :, 2] = np.clip((mask_over_ori[:, :, 2] + __mask * 150), 0.0, 255.0)
+
+        __mask = __mask * 255
+        cv.imwrite(f'{result_attempt_dir}/pred_over_ori/pred_over_ori{(index + 1):03d}.png', mask_over_ori)
         cv.imwrite(f'{result_attempt_dir}/degraded/img{(index + 1):03d}.png', degraded_img)
-        cv.imwrite(f'{result_attempt_dir}/mask_predictions/pred{(index + 1):03d}.png', __mask)
+        cv.imwrite(f'{result_attempt_dir}/mask/pred{(index + 1):03d}.png', __mask)
         if if_truemask:
             mask_ori = cv.imread(mask_ori_path) * 255
-            cv.imwrite(f'{result_attempt_dir}/mask_predictions/truth{(index + 1):03d}.png', mask_ori)
-            cv.imshow(f'Mask_ori', cv.resize(mask_ori, [720, 360]))
-            cv.moveWindow(f'Mask_ori', 2560, 360)
+            cv.imwrite(f'{result_attempt_dir}/mask/truth{(index + 1):03d}.png', mask_ori)
 
-        mask_preds = cv.imread(f'{result_attempt_dir}/mask_predictions/pred{(index + 1):03d}.png', cv.IMREAD_GRAYSCALE)
-        cv.imshow(f'Degraded frame', cv.resize(degraded_img, [1440, 720]))
-        cv.imshow(f'Mask_preds', cv.resize(mask_preds, [1440, 720]))
-        cv.moveWindow(f'Degraded frame', 2560, 0)
-        cv.moveWindow(f'Mask_preds', 2560, 720)
-        cv.waitKey(1)
+
 
         index += 1
 
