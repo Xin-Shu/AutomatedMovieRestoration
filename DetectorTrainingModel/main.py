@@ -20,11 +20,11 @@ input_dir = "M:/MAI_dataset/tempSamples/train_set/degraded/"
 target_dir = "M:/MAI_dataset/tempSamples/train_set/mask/"
 valid_img_dir = 'M:/MAI_dataset/tempSamples/valid_set/frame/'
 valid_mask_dir = "M:/MAI_dataset/tempSamples/valid_set/mask/"
-test_img_dir = 'M:/MAI_dataset/tempSamples/test_set/cropped/'
-test_mask_dir = "M:/MAI_dataset/tempSamples/train_set/mask/"
-img_size = (189, 336)   # np.multiply((270, 480), 0.8).astype(int)  # (270, 480)(360, 640)(180, 320)(189, 336)
+test_img_dir = 'M:/MAI_dataset/tempSamples/valid_set/frame/'
+test_mask_dir = "M:/MAI_dataset/tempSamples/valid_set/mask/"
+img_size = (270, 480)   # np.multiply((270, 480), 0.8).astype(int)  # (270, 480)(360, 640)(180, 320)(189, 336)
 num_classes = 2
-batch_size = 2
+batch_size = 1
 
 date = date.today().strftime("%m-%d")
 result_dir = f'M:/MAI_dataset/TrainedModels/{date}'
@@ -75,7 +75,6 @@ class ImageLoading(keras.utils.Sequence):
         for j, path in enumerate(batch_target_img_paths):
             img = load_img(path, target_size=self.img_size, color_mode="grayscale")
             y[j] = np.expand_dims(img, 2)
-        # print(x[300, 100], y[300, 100])
         return x, y
 
 
@@ -120,8 +119,6 @@ def validation_split(input_img_paths, target_img_paths):
         val_samples = num_of_samples
     else:
         val_samples = int(num_of_samples * 0.3)
-    # random.Random(num_of_samples).shuffle(input_img_paths)
-    # random.Random(num_of_samples).shuffle(target_img_paths)
     train_input_img_paths = input_img_paths[:-val_samples]
     train_target_img_paths = target_img_paths[:-val_samples]
     val_input_img_paths = input_img_paths[-val_samples:]
@@ -137,7 +134,7 @@ def training(train_gen, val_gen, num_classes_, img_size_, use_pretrained, result
     global result_dir
     model_path = f'{result_attempt_dir}/generalDegradedDetection.h5'
     if use_pretrained:
-        model_path = 'M:/MAI_dataset/TrainedModels/02-14/Attempt 2/generalDegradedDetection.h5'
+        model_path = 'M:/MAI_dataset/TrainedModels/02-16/Attempt 3/generalDegradedDetection.h5'
         print(f'INFO: Using pre-trained model from: {model_path}')
         model = keras.models.load_model(model_path, compile=False)
         test_preds = model.predict(test_gen)
@@ -201,26 +198,25 @@ def convert_array_to_imgs(result_attempt_dir, input_degraded_img_path, ground_tr
     index = 0
     print(f'INFO: Predictions saved in the following path: {result_attempt_dir}/degraded/')
     for (degraded_img_path, mask_ori_path) in zip(input_degraded_img_path, ground_truth_mask_path):
-        degraded_img = cv.imread(degraded_img_path)
+        degraded_img = cv.imread(degraded_img_path, cv.IMREAD_GRAYSCALE)
         degraded_img = cv.resize(degraded_img, [img_size[1], img_size[0]])
 
         __mask = np.argmax(test_preds[index], axis=-1)
         __mask = np.expand_dims(__mask, axis=-1)
-
-        mask_over_ori = cv.cvtColor(degraded_img, cv.COLOR_GRAY2RGB)
-        mask_over_ori[:, :, 0] = np.clip((mask_over_ori[:, :, 0] - __mask * 150), 0.0, 255.0)
-        mask_over_ori[:, :, 1] = np.clip((mask_over_ori[:, :, 1] - __mask * 150), 0.0, 255.0)
-        mask_over_ori[:, :, 2] = np.clip((mask_over_ori[:, :, 2] + __mask * 150), 0.0, 255.0)
-
         __mask = __mask * 255
-        cv.imwrite(f'{result_attempt_dir}/pred_over_ori/pred_over_ori{(index + 1):03d}.png', mask_over_ori)
+
+        # mask_over_ori = cv.cvtColor(degraded_img, cv.COLOR_GRAY2RGB)
+        # temp_mask = cv.imread(f'{result_attempt_dir}/mask/pred{(index + 1):03d}.png', cv.IMREAD_GRAYSCALE)
+        # mask_over_ori[:, :, 0] = np.clip((mask_over_ori[:, :, 0] - temp_mask * 150), 0.0, 255.0)
+        # mask_over_ori[:, :, 1] = np.clip((mask_over_ori[:, :, 1] - temp_mask * 150), 0.0, 255.0)
+        # mask_over_ori[:, :, 2] = np.clip((mask_over_ori[:, :, 2] + temp_mask * 150), 0.0, 255.0)
+
+        # cv.imwrite(f'{result_attempt_dir}/pred_over_ori/pred_over_ori{(index + 1):03d}.png', mask_over_ori)
         cv.imwrite(f'{result_attempt_dir}/degraded/img{(index + 1):03d}.png', degraded_img)
         cv.imwrite(f'{result_attempt_dir}/mask/pred{(index + 1):03d}.png', __mask)
         if if_truemask:
             mask_ori = cv.imread(mask_ori_path) * 255
             cv.imwrite(f'{result_attempt_dir}/mask/truth{(index + 1):03d}.png', mask_ori)
-
-
 
         index += 1
 
