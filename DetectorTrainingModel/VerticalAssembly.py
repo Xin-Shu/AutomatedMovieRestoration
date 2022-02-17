@@ -12,7 +12,7 @@ os.environ['PYOPENCL_COMPILER_OUTPUT'] = '1'
 os.environ['PYOPENCL_CTX'] = '1'
 os.environ['DML_VISIBLE_DEVICES'] = '0'
 cv.ocl.setUseOpenCL(True)
-new_size = (480, 270)
+new_size = (320, 180)
 fps = 120
 
 

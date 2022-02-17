@@ -143,7 +143,7 @@ def training(train_gen, val_gen, num_classes_, img_size_, use_pretrained, result
         # Build model
         model = get_model(img_size_, num_classes)
         model.summary()
-        optimizer = tf.contrib.opt.AdamWOptimizer(learning_rate=0.01, weight_decay=0.0001)
+        optimizer = tf.contrib.opt.AdamWOptimizer(learning_rate=0.005, weight_decay=0.0001)
         model.compile(optimizer=optimizer,
                       loss=tf.keras.losses.SparseCategoricalCrossentropy(),
                       metrics=["accuracy"]

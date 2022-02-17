@@ -11,7 +11,7 @@ from pyopencl.tools import get_test_platforms_and_devices
 os.environ['PYOPENCL_COMPILER_OUTPUT'] = '1'
 os.environ['PYOPENCL_CTX'] = '1'
 cv.ocl.setUseOpenCL(True)
-new_size = (480, 270)
+new_size = (320, 180)
 fps = 120
 
 
@@ -39,7 +39,7 @@ def degraded_module(name, resol):
         max_width = 5
         # colormap(gray(256));
         scratch_num_list = []
-        line_pos_set, brightness_set = [50, 150, 270], 50
+        line_pos_set, brightness_set = [50, 150, 270], 70
         count = 0
         time_now = time.time()
         print(f'\nProcessing filme [{name}], {len(pngFiles)} frames in total')
@@ -88,7 +88,7 @@ def degraded_module(name, resol):
                 slope = random.uniform(-1, 1) * 0.0001
                 for n in range(0, rows):
                     profile = makeLineProfile(cols, line_pos, (a - 50), 0.25, slope, n, w)
-                    temp = degrade2[n, left_boundary:right_boundary] + profile[left_boundary:right_boundary] * 0.4
+                    temp = degrade2[n, left_boundary:right_boundary] + profile[left_boundary:right_boundary] * 0.3
                     np.place(temp, temp > 255.0, 255.0)
                     np.place(temp, temp < 0.0, 0.0)
                     degrade2[n, left_boundary:right_boundary] = temp
