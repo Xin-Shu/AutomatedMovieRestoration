@@ -11,7 +11,7 @@ from pyopencl.tools import get_test_platforms_and_devices
 os.environ['PYOPENCL_COMPILER_OUTPUT'] = '1'
 os.environ['PYOPENCL_CTX'] = '1'
 cv.ocl.setUseOpenCL(True)
-new_size = (320, 180)
+new_size = (480, 270)
 fps = 120
 
 
@@ -88,7 +88,7 @@ def degraded_module(name, resol):
                 slope = random.uniform(-1, 1) * 0.0001
                 for n in range(0, rows):
                     profile = makeLineProfile(cols, line_pos, (a - 50), 0.25, slope, n, w)
-                    temp = degrade2[n, left_boundary:right_boundary] + profile[left_boundary:right_boundary] * 0.2
+                    temp = degrade2[n, left_boundary:right_boundary] + profile[left_boundary:right_boundary] * 0.4
                     np.place(temp, temp > 255.0, 255.0)
                     np.place(temp, temp < 0.0, 0.0)
                     degrade2[n, left_boundary:right_boundary] = temp
@@ -98,11 +98,11 @@ def degraded_module(name, resol):
             cv.imwrite(degradedFullName, degrade2)
             cv.imwrite(maskFullName, binary_mask)
 
-            cv.imshow(f'Degraded frame', cv.resize(degrade2, [960, 540]))
-            cv.imshow(f'Mask', cv.resize(binary_mask, [960, 540]))
-            cv.moveWindow(f'Degraded frame', 1000, 0)
-            cv.moveWindow(f'Mask', 1000, 541)
-            cv.waitKey(1)
+            # cv.imshow(f'Degraded frame', cv.resize(degrade2, [960, 540]))
+            # cv.imshow(f'Mask', cv.resize(binary_mask, [960, 540]))
+            # cv.moveWindow(f'Degraded frame', 1000, 0)
+            # cv.moveWindow(f'Mask', 1000, 541)
+            # cv.waitKey(1)
 
 
 def main(args):

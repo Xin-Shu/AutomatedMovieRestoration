@@ -10,8 +10,9 @@ from pyopencl.tools import get_test_platforms_and_devices
 
 os.environ['PYOPENCL_COMPILER_OUTPUT'] = '1'
 os.environ['PYOPENCL_CTX'] = '1'
+os.environ['DML_VISIBLE_DEVICES'] = '0'
 cv.ocl.setUseOpenCL(True)
-new_size = (320, 180)
+new_size = (480, 270)
 fps = 120
 
 
@@ -48,8 +49,8 @@ def vertically_assembly(name):
         frame_vertically_3 = np.concatenate((img1, img2, img3), axis=0)
         frame_vertically_3 = cv.resize(frame_vertically_3, [int(new_size[0] * 1.5), int(new_size[1] * 1.5)])
         cv.imwrite(f'{to_frame_folder}/frame-{index}.png', frame_vertically_3)
-        cv.imshow(f'frame_vertically_3', frame_vertically_3)
-        cv.moveWindow(f'frame_vertically_3', -1000 - 2 * int(new_size[0] * 1.5), 50)
+        # cv.imshow(f'frame_vertically_3', frame_vertically_3)
+        # cv.moveWindow(f'frame_vertically_3', -1000 - 2 * int(new_size[0] * 1.5), 50)
 
         mask1 = cv.imread(maskFiles_path[index - 1], cv.IMREAD_GRAYSCALE)
         mask2 = cv.imread(maskFiles_path[index], cv.IMREAD_GRAYSCALE)
@@ -57,15 +58,15 @@ def vertically_assembly(name):
         mask_vertically_3 = np.concatenate((mask1, mask2, mask3), axis=0)
         mask_vertically_3 = cv.resize(mask_vertically_3, [int(new_size[0] * 1.5), int(new_size[1] * 1.5)])
         cv.imwrite(f'{to_mask_folder}/mask-{index}.png', mask_vertically_3)
-        cv.imshow(f'mask_vertically_3', mask_vertically_3 * 255)
-        cv.moveWindow(f'mask_vertically_3', -1000 - int(new_size[0] * 1.5), 50)
+        # cv.imshow(f'mask_vertically_3', mask_vertically_3 * 255)
+        # cv.moveWindow(f'mask_vertically_3', -1000 - int(new_size[0] * 1.5), 50)
 
         # mask_over_ori = cv.cvtColor(frame_vertically_3, cv.COLOR_GRAY2RGB)
         # mask_over_ori[:, :, 0] = np.clip((mask_over_ori[:, :, 0] - mask_vertically_3 * 150), 0.0, 255.0)
         # mask_over_ori[:, :, 1] = np.clip((mask_over_ori[:, :, 1] - mask_vertically_3 * 150), 0.0, 255.0)
         # mask_over_ori[:, :, 2] = np.clip((mask_over_ori[:, :, 2] + mask_vertically_3 * 150), 0.0, 255.0)
 
-        cv.waitKey(20)
+        # cv.waitKey(20)
 
 
 def main(args):

@@ -20,7 +20,7 @@ input_dir = "M:/MAI_dataset/tempSamples/train_set/degraded/"
 target_dir = "M:/MAI_dataset/tempSamples/train_set/mask/"
 valid_img_dir = 'M:/MAI_dataset/tempSamples/valid_set/frame/'
 valid_mask_dir = "M:/MAI_dataset/tempSamples/valid_set/mask/"
-test_img_dir = 'M:/MAI_dataset/tempSamples/valid_set/frame/'
+test_img_dir = 'M:/MAI_dataset/tempSamples/test_set/frame/'
 test_mask_dir = "M:/MAI_dataset/tempSamples/valid_set/mask/"
 img_size = (270, 480)   # np.multiply((270, 480), 0.8).astype(int)  # (270, 480)(360, 640)(180, 320)(189, 336)
 num_classes = 2
@@ -134,7 +134,7 @@ def training(train_gen, val_gen, num_classes_, img_size_, use_pretrained, result
     global result_dir
     model_path = f'{result_attempt_dir}/generalDegradedDetection.h5'
     if use_pretrained:
-        model_path = 'M:/MAI_dataset/TrainedModels/02-16/Attempt 3/generalDegradedDetection.h5'
+        model_path = 'M:/MAI_dataset/TrainedModels/02-17/Attempt 2/generalDegradedDetection.h5'
         print(f'INFO: Using pre-trained model from: {model_path}')
         model = keras.models.load_model(model_path, compile=False)
         test_preds = model.predict(test_gen)
@@ -239,9 +239,16 @@ def main(args):
     if_reuse = input("Use pre-trained model? (Y/N)")
     if if_reuse.lower() == 'y':
         if_reuse = True
-        result_attempt_dir = f'{result_dir}/Attempt {attempts}'
-        if os.path.isdir(f'{result_attempt_dir}') is False:
-            os.mkdir(f'{result_attempt_dir}')
+        if os.path.isdir(f'{result_dir}/Attempt {attempts}') is False:
+            os.mkdir(f'{result_dir}/Attempt {attempts}')
+            result_attempt_dir = f'{result_dir}/Attempt {attempts}'
+        else:
+            while os.path.isdir(f'{result_dir}/Attempt {attempts}') is True:
+                if len(os.listdir(f'{result_dir}/Attempt {attempts}')) <= 1:
+                    rmtree(f'{result_dir}/Attempt {attempts}')
+                    break
+                attempts += 1
+            result_attempt_dir = f'{result_dir}/Attempt {attempts - 1}'
     else:
         if_reuse = False
         if os.path.isdir(f'{result_dir}/Attempt {attempts}') is False:

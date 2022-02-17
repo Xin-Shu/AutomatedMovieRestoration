@@ -14,7 +14,7 @@ The aim of adding this script is to make better predictions over large input ima
 adjust_size = (1920, 1080)
 out_size = (480, 270)
 input_path = 'M:/MAI_dataset/Sequence_lines_1'
-output_path = 'M:/MAI_dataset/tempSamples/test_set/cropped/'
+output_path = 'M:/MAI_dataset/tempSamples/test_set/frame/'
 
 
 def crop_img(input_path_, output_path_):
@@ -29,8 +29,8 @@ def crop_img(input_path_, output_path_):
         input_img3 = cv.imread(input_img_paths[index + 1])
         input_img3 = cv.resize(input_img3, adjust_size)
 
-        for i in range(0, 6):
-            for j in range(0, 6):
+        for i in range(0, 4):
+            for j in range(0, 4):
 
                 topleft_x, topleft_y = i * 320, j * 180
 
