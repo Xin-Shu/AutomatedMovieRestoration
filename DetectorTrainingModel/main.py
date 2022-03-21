@@ -22,9 +22,9 @@ valid_img_dir = 'M:/MAI_dataset/tempSamples/valid_set/frame/'
 valid_mask_dir = "M:/MAI_dataset/tempSamples/valid_set/mask/"
 test_img_dir = 'M:/MAI_dataset/tempSamples/test_set/frame/'
 test_mask_dir = "M:/MAI_dataset/tempSamples/valid_set/mask/"
-img_size = (270, 480)   # np.multiply((270, 480), 0.8).astype(int)  # (270, 480)(360, 640)(180, 320)(189, 336)
+img_size = (180, 320)   # np.multiply((270, 480), 0.8).astype(int)  # (270, 480)(360, 640)(180, 320)(189, 336)
 num_classes = 2
-batch_size = 1
+batch_size = 2
 
 date = date.today().strftime("%m-%d")
 result_dir = f'M:/MAI_dataset/TrainedModels/{date}'
@@ -60,7 +60,7 @@ class ImageLoading(keras.utils.Sequence):
         self.target_img_paths = target_img_paths_
 
     def __len__(self):
-        return len(self.target_img_paths) // self.batch_size
+        return len(self.input_img_paths) // self.batch_size
 
     def __getitem__(self, idx):
         """Returns tuple (input, target) correspond to batch #idx."""
@@ -112,20 +112,22 @@ def get_model(img_size_, num_classes_):
     return model_
 
 
-def validation_split(input_img_paths, target_img_paths):
+def validation_split(input_img_paths, target_img_paths, if_useAll):
     global batch_size, img_size
     num_of_samples = len(input_img_paths)
-    if num_of_samples <= 100:
+    if if_useAll:
         val_samples = num_of_samples
     else:
-        val_samples = int(num_of_samples * 0.3)
-    train_input_img_paths = input_img_paths[:-val_samples]
-    train_target_img_paths = target_img_paths[:-val_samples]
+        val_samples = int(num_of_samples * 0.)  #
+    print("val_samples: ", val_samples)
+    train_input_img_paths = input_img_paths
+    train_target_img_paths = target_img_paths
     val_input_img_paths = input_img_paths[-val_samples:]
     val_target_img_paths = target_img_paths[-val_samples:]
     # Instantiate data Sequences for each split
     train_gen = ImageLoading(batch_size, img_size, train_input_img_paths, train_target_img_paths)
     val_gen = ImageLoading(batch_size, img_size, val_input_img_paths, val_target_img_paths)
+    print(f'lenth111: {len(train_gen)}, {len(val_gen)}, {len(val_input_img_paths)}, {len(val_target_img_paths)}')
     return train_gen, val_gen, val_input_img_paths, val_target_img_paths
 
 
@@ -212,8 +214,9 @@ def convert_array_to_imgs(result_attempt_dir, input_degraded_img_path, ground_tr
         # mask_over_ori[:, :, 2] = np.clip((mask_over_ori[:, :, 2] + temp_mask * 150), 0.0, 255.0)
 
         # cv.imwrite(f'{result_attempt_dir}/pred_over_ori/pred_over_ori{(index + 1):03d}.png', mask_over_ori)
-        cv.imwrite(f'{result_attempt_dir}/degraded/img{(index + 1):03d}.png', degraded_img)
-        cv.imwrite(f'{result_attempt_dir}/mask/pred{(index + 1):03d}.png', __mask)
+
+        cv.imwrite(f'{result_attempt_dir}/degraded/{os.path.basename(degraded_img_path)}', degraded_img)
+        cv.imwrite(f'{result_attempt_dir}/mask/{os.path.basename(degraded_img_path)}', __mask)
         if if_truemask:
             mask_ori = cv.imread(mask_ori_path) * 255
             cv.imwrite(f'{result_attempt_dir}/mask/truth{(index + 1):03d}.png', mask_ori)
@@ -230,9 +233,9 @@ def main(args):
     valid_img, valid_mask = load_dataset_path(valid_img_dir, valid_mask_dir)
     test_img, test_mask = load_dataset_path(test_img_dir, test_mask_dir)
 
-    train_gen, _, _, _ = validation_split(input_img_paths, target_img_paths)
-    _, val_gen, _, _ = validation_split(input_img_paths, target_img_paths)
-    _, test_gen, test_input_img_path, test_target_img_path = validation_split(test_img, test_mask)
+    train_gen, _, _, _ = validation_split(input_img_paths, target_img_paths, 0)
+    val_gen, _, _, _ = validation_split(valid_img, valid_mask, 0)
+    _, test_gen, test_input_img_path, test_target_img_path = validation_split(test_img, test_mask, 1)
 
     '''Free up RAM in case the model definition cells were run multiple times'''
     keras.backend.clear_session()

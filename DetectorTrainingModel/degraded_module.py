@@ -6,12 +6,12 @@ import random
 import cv2 as cv
 import numpy as np
 from tqdm import tqdm
+from DatasetPerparation import output_size
 from pyopencl.tools import get_test_platforms_and_devices
 
 os.environ['PYOPENCL_COMPILER_OUTPUT'] = '1'
 os.environ['PYOPENCL_CTX'] = '1'
 cv.ocl.setUseOpenCL(True)
-new_size = (320, 180)
 fps = 120
 
 
@@ -24,9 +24,9 @@ def makeLineProfile(cols, pos, amplitude, damping, m, row, w):
 
 def degraded_module(name, resol):
 
-    org_folder = f'M:/MAI_dataset/Origin_set/{resol}-png'
-    degrade_folder = f'M:/MAI_dataset/Degraded_set/{name}/frame'
-    mask_folder = f'M:/MAI_dataset/Degraded_set/{name}/mask'
+    org_folder = f'M:/MAI_dataset/Origin_set/{name}-sample'
+    degrade_folder = f'M:/MAI_dataset/Degraded_set/SAMPLE-{name}/frame'
+    mask_folder = f'M:/MAI_dataset/Degraded_set/SAMPLE-{name}/mask'
 
     if os.path.isdir(org_folder) is False:
         import warnings
@@ -36,10 +36,12 @@ def degraded_module(name, resol):
     else:
         pngFiles = [file for file in os.listdir(org_folder) if file.endswith('.png')]
         # Processing images
-        max_width = 5
+        max_width = 8
         # colormap(gray(256));
         scratch_num_list = []
-        line_pos_set, brightness_set = [50, 150, 270], 70
+        ori_size = cv.imread(org_folder + f'/{pngFiles[0]}').shape  # e.g., (545, 1280, 3)
+
+        line_pos_set, brightness_set = [int(ori_size[1]/5), int(ori_size[1]/2), int(ori_size[1]/1.2)], 70
         count = 0
         time_now = time.time()
         print(f'\nProcessing filme [{name}], {len(pngFiles)} frames in total')
@@ -49,8 +51,7 @@ def degraded_module(name, resol):
 
             fullName = os.path.join(org_folder, frameName)
             frame_org = cv.imread(fullName)
-            frame_resize = cv.resize(frame_org, new_size)
-            gray_frame = cv.cvtColor(frame_resize, cv.COLOR_RGB2GRAY)  # 1 / 5 of 1080p
+            gray_frame = cv.cvtColor(frame_org, cv.COLOR_RGB2GRAY)  # 1 / 5 of 1080p
             rows, cols = gray_frame.shape
             binary_mask = np.zeros([rows, cols, 1], 'double')
             degrade = gray_frame
@@ -63,7 +64,7 @@ def degraded_module(name, resol):
             for line_num in range(1, scratch_num + 1):  # Add randomly up to 4 lines
                 # line_pos = random.randint(max_width, cols - 2 * max_width) + max_width + 1
                 line_pos = random.randint(-1, 1) + temp_line_pos_set[line_num - 1]
-                if line_pos >= 320 or line_pos <= 0:
+                if line_pos >= ori_size[1] or line_pos <= 0:
                     temp_line_pos_set = line_pos_set
                 else:
                     temp_line_pos_set[line_num - 1] = line_pos

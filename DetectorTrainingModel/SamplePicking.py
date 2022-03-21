@@ -59,7 +59,7 @@ def sampling_frames(degraded_path, mask_path, name):
 
     if name == 'ST':
         count_st = 0
-        list_num_of_sample = random.sample(range(100, totalFrames - 200), 500)
+        list_num_of_sample = random.sample(range(0, totalFrames), 1000)
         print(f'\nProcessing validation set [{name}]: '
               f'randomly pick {len(list_num_of_sample)} from {totalFrames} frames.')
         for num in tqdm(list_num_of_sample, bar_format='{percentage:3.0f}%|{bar:100}{r_bar}'):
@@ -73,7 +73,7 @@ def sampling_frames(degraded_path, mask_path, name):
             copyfile(mask_from_path, mask_to_path)
 
     else:
-        list_num_of_sample = random.sample(range(3000, totalFrames - 1000), 500)
+        list_num_of_sample = random.sample(range(0, totalFrames), 1000)
         print(f'\nProcessing training set [{name}]: '
               f'randomly pick {len(list_num_of_sample)} from {totalFrames} frames.')
         for num in tqdm(list_num_of_sample, bar_format='{percentage:3.0f}%|{bar:100}{r_bar}'):

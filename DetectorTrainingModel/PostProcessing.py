@@ -1,12 +1,12 @@
 #  type in date and attempt number
-
 import os
 import sys
 import cv2 as cv
 import numpy as np
 from tqdm import tqdm
+from shutil import rmtree
 
-in_size = (480, 270)
+in_size = (320, 180)
 display_size = (720, 405)
 
 
@@ -50,17 +50,26 @@ def draw_mask_over_degraded_frame(frame_folder, mask_folder, out_folder_):
         cv.moveWindow('mask', int(- display_size[0] * 1.5 + 10), 10)
         cv.moveWindow('mask_over_ori', int(- display_size[0] * 2.5 + 10), 10 + display_size[1])
 
-        cv.imwrite(f'{out_folder_}/mask_over_frame_{i}.png', mask_over_ori)
+        cv.imwrite(f'{out_folder_}/{os.path.basename(frame_path[i])}', mask_over_ori)
 
         cv.waitKey(1)
 
 
-if __name__ == '__main__':
+def main(args):
     date_ = input("Date of training results: ")
     attempt_ = input(f"Attempt number on {date_}: ")
     degraded_frame_folder = f'M:/MAI_dataset/TrainedModels/{date_}/Attempt {attempt_}/degraded/'
     predicted_mask_folder = f'M:/MAI_dataset/TrainedModels/{date_}/Attempt {attempt_}/mask/'
     out_folder = f'M:/MAI_dataset/TrainedModels/{date_}/Attempt {attempt_}/mask_over_frame/'
+    if os.path.isdir(out_folder):
+        rmtree(out_folder)
+    os.mkdir(out_folder)
     draw_mask_over_degraded_frame(degraded_frame_folder, predicted_mask_folder, out_folder)
     # print(os.path.isdir(degraded_frame_folder))
     # print(os.path.isdir(predicted_mask_folder))
+
+
+if __name__ == '__main__':
+    main(sys.argv)
+
+
