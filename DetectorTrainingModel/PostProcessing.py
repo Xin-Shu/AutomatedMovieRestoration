@@ -11,7 +11,9 @@ import numpy as np
 from tqdm import tqdm
 from shutil import rmtree
 
-in_size = (320, 180)
+from DatasetPerparation import output_size
+
+in_size = output_size
 display_size = (720, 405)
 
 

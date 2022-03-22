@@ -59,7 +59,7 @@ def degraded_module(name, resol, if_reset):
     else:
         pngFiles = [file for file in os.listdir(org_folder) if file.endswith('.png')]
         # Processing images
-        max_width = 8
+        max_width = 7
         # colormap(gray(256));
         scratch_num_list = []
         ori_size = cv.imread(org_folder + f'/{pngFiles[0]}').shape  # e.g., (545, 1280, 3)

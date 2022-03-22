@@ -188,8 +188,6 @@ def training(train_gen, val_gen, num_classes_, img_size_, use_pretrained, result
 def convert_array_to_imgs(result_attempt_dir, input_degraded_img_path, ground_truth_mask_path, test_preds, if_truemask):
     """Quick utility to display a model's prediction."""
 
-    if os.path.isdir(f'{result_attempt_dir}/pred_over_ori'):
-        rmtree(f'{result_attempt_dir}/pred_over_ori')
     if os.path.isdir(f'{result_attempt_dir}/mask'):
         rmtree(f'{result_attempt_dir}/mask')
     if os.path.isdir(f'{result_attempt_dir}/degraded'):
@@ -200,7 +198,7 @@ def convert_array_to_imgs(result_attempt_dir, input_degraded_img_path, ground_tr
 
     index = 0
     print(f'INFO: Predictions saved in the following path: {result_attempt_dir}/degraded/')
-    for (degraded_img_path, mask_ori_path) in zip(input_degraded_img_path, ground_truth_mask_path):
+    for degraded_img_path in input_degraded_img_path:
         degraded_img = cv.imread(degraded_img_path, cv.IMREAD_GRAYSCALE)
         degraded_img = cv.resize(degraded_img, [img_size[1], img_size[0]])
 
@@ -218,9 +216,6 @@ def convert_array_to_imgs(result_attempt_dir, input_degraded_img_path, ground_tr
 
         cv.imwrite(f'{result_attempt_dir}/degraded/{os.path.basename(degraded_img_path)}', degraded_img)
         cv.imwrite(f'{result_attempt_dir}/mask/{os.path.basename(degraded_img_path)}', __mask)
-        if if_truemask:
-            mask_ori = cv.imread(mask_ori_path) * 255
-            cv.imwrite(f'{result_attempt_dir}/mask/truth{(index + 1):03d}.png', mask_ori)
 
         index += 1
 

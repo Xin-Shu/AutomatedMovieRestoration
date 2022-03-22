@@ -16,13 +16,13 @@ This means the extracted area of the original frame is 1792,
 
 '''
 
-adjust_size = (1828, 1332)
+ori_size = (1828, 1332)
 out_size = (320, 180)
 input_path = 'M:/MAI_dataset/Sequence_lines_1'
 output_path = 'M:/MAI_dataset/tempSamples/test_set/frame/'
 
 
-def crop_img(input_path_, output_path_, out_size_):
+def crop_img(input_path_, output_path_, out_size_, ori_size_):
     width, height = out_size_[0], out_size_[1]
     input_img_paths = glob.glob(f'{input_path_}/*.bmp')
     count_frame = 0
@@ -32,15 +32,17 @@ def crop_img(input_path_, output_path_, out_size_):
         input_img2 = cv.imread(input_img_paths[index])
         input_img3 = cv.imread(input_img_paths[index + 1])
 
-        for i in range(0, 6):
-            for j in range(0, 8):
+        i, j = 0, 0
+        while height * (j + 1) <= ori_size_[1]:
+            i = 0
+            while width * (i + 1) <= ori_size_[0]:
 
                 topleft_x, topleft_y = i * width, j * height
 
-                if topleft_x + width > adjust_size[0] - 1:
-                    topleft_x = adjust_size[0] - 1 - width
-                if topleft_y + height > adjust_size[1] - 1:
-                    topleft_y = adjust_size[1] - 1 - height
+                if topleft_x + width > ori_size_[0] - 1:
+                    topleft_x = ori_size_[0] - 1 - width
+                if topleft_y + height > ori_size_[1] - 1:
+                    topleft_y = ori_size_[1] - 1 - height
 
                 crop1 = input_img1[topleft_y:topleft_y + height, topleft_x:topleft_x + width]
                 crop2 = input_img2[topleft_y:topleft_y + height, topleft_x:topleft_x + width]
@@ -49,6 +51,10 @@ def crop_img(input_path_, output_path_, out_size_):
                 crop_vertical_3 = cv.resize(crop_vertical_3, out_size)
                 cv.imwrite(f'{output_path_}frame{count_frame}-{i + 1}-{j + 1}.png', crop_vertical_3)
 
+                i += 1
+
+            j += 1
+
 
 if __name__ == '__main__':
     reset = True
@@ -56,4 +62,4 @@ if __name__ == '__main__':
         if os.path.isdir(output_path):
             rmtree(output_path)
             os.mkdir(output_path)
-        crop_img(input_path, output_path, out_size)
+        crop_img(input_path, output_path, out_size, ori_size)
