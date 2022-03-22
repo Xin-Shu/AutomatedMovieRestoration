@@ -6,14 +6,19 @@ import numpy as np
 from tqdm import tqdm
 from shutil import rmtree
 
+from CropsExtraction import ori_size
+from DatasetPerparation import output_size
 
-def MaskCleaner(frameIN_PATH, maskIN_PATH, frameOUT_PATH, maskOUT_PATH, if_remake):
+
+def MaskCleaner(frameIN_PATH, maskIN_PATH, frameOUT_PATH, maskOUT_PATH, maskEntireOUT_PATH, if_remake):
 
     if if_remake:
         rmtree(frameOUT_PATH)
         os.mkdir(frameOUT_PATH)
         rmtree(maskOUT_PATH)
         os.mkdir(maskOUT_PATH)
+        rmtree(maskEntireOUT_PATH)
+        os.mkdir(maskEntireOUT_PATH)
 
     if os.path.isdir(maskIN_PATH) is False or os.path.isdir(maskOUT_PATH) is False:
         import warnings
@@ -32,6 +37,12 @@ def MaskCleaner(frameIN_PATH, maskIN_PATH, frameOUT_PATH, maskOUT_PATH, if_remak
         for fname in os.listdir(maskIN_PATH)
         if fname.endswith(".png")]
     )
+
+    # Define a zero matrix that has the same shape as the degraded frame
+    maskAssembled = np.zeros([ori_size[0], ori_size[1]], dtype="uint8")
+    maskWidth, maskHeight = output_size[0], int(output_size[1] / 3),
+
+    maskFrameNum_mark = 1
 
     for i in tqdm(range(0, len(maskIN)), bar_format='{percentage:3.0f}%|{bar:100}{r_bar}'):
 
@@ -58,15 +69,30 @@ def MaskCleaner(frameIN_PATH, maskIN_PATH, frameOUT_PATH, maskOUT_PATH, if_remak
             else:
                 maskOUT[:, col] = 0
 
-        cleanedOverlay = cv.cvtColor(frame_ori, cv.COLOR_GRAY2RGB)
-        # cleanedOverlay[:, :, 0] = np.clip((cleanedOverlay[:, :, 0] - maskOUT * 150), 0.0, 255.0)
-        cleanedOverlay[int(mask_shape[0] / 3):int(mask_shape[0] / 3 * 2), :, 1] = \
-            np.clip((cleanedOverlay[int(mask_shape[0] / 3):int(mask_shape[0] / 3 * 2), :, 1] - maskOUT / 255 * 150),
-                    0.0, 255.0)
-        # cleanedOverlay[:, :, 2] = np.clip((cleanedOverlay[:, :, 2] + maskOUT * 150), 0.0, 255.0)
+        frameName = os.path.basename(maskIN[i])
+        maskFrameNum, maskColNum, maskRowNum = int(frameName[5:-8]), int(frameName[-7]), int(frameName[-5])
 
-        cv.imwrite(f'{frameOUT_PATH}/{os.path.basename(maskIN[i])}', cleanedOverlay)
-        cv.imwrite(f'{maskOUT_PATH}/{os.path.basename(maskIN[i])}', maskOUT)
+        topLeft_x, topLeft_y = maskWidth * (maskColNum - 1), maskHeight * (maskRowNum - 1)
+        if topLeft_y + maskHeight <= ori_size[1] and topLeft_x + maskWidth < ori_size[0]:
+            maskAssembled[topLeft_y:topLeft_y + maskHeight, topLeft_x:topLeft_x + maskWidth] = maskOUT
+
+        if maskFrameNum_mark != maskFrameNum:
+
+            cv.imshow("Entire mask", maskAssembled)
+            cv.waitKey(0)
+            maskFrameNum_mark = maskFrameNum
+
+        print(maskFrameNum, '   ', maskColNum, '   ', maskRowNum)
+
+        # cleanedOverlay = cv.cvtColor(frame_ori, cv.COLOR_GRAY2RGB)
+        # # cleanedOverlay[:, :, 0] = np.clip((cleanedOverlay[:, :, 0] - maskOUT * 150), 0.0, 255.0)
+        # cleanedOverlay[int(mask_shape[0] / 3):int(mask_shape[0] / 3 * 2), :, 1] = \
+        #     np.clip((cleanedOverlay[int(mask_shape[0] / 3):int(mask_shape[0] / 3 * 2), :, 1] - maskOUT / 255 * 150),
+        #             0.0, 255.0)
+        # # cleanedOverlay[:, :, 2] = np.clip((cleanedOverlay[:, :, 2] + maskOUT * 150), 0.0, 255.0)
+        #
+        # cv.imwrite(f'{frameOUT_PATH}/{os.path.basename(maskIN[i])}', cleanedOverlay)
+        # cv.imwrite(f'{maskOUT_PATH}/{os.path.basename(maskIN[i])}', maskOUT)
 
 
 def main(args):
@@ -78,13 +104,16 @@ def main(args):
     predicted_mask_folder = f'M:/MAI_dataset/TrainedModels/{date_}/Attempt {attempt_}/mask/'
     frameOut_folder = f'M:/MAI_dataset/TrainedModels/{date_}/Attempt {attempt_}/cleaned_mask_over_frame/'
     maskOut_folder = f'M:/MAI_dataset/TrainedModels/{date_}/Attempt {attempt_}/cleaned_mask/'
+    maskEntireOut_folder = f'M:/MAI_dataset/TrainedModels/{date_}/Attempt {attempt_}/entire_cleaned_mask/'
 
     if os.path.isdir(maskOut_folder):
         rmtree(maskOut_folder)
         rmtree(frameOut_folder)
+        rmtree(maskEntireOut_folder)
     os.mkdir(frameOut_folder)
     os.mkdir(maskOut_folder)
-    MaskCleaner(degraded_frame_folder, predicted_mask_folder, frameOut_folder, maskOut_folder, 1)
+    os.mkdir(maskEntireOut_folder)
+    MaskCleaner(degraded_frame_folder, predicted_mask_folder, frameOut_folder, maskOut_folder, maskEntireOut_folder, 1)
 
 
 if __name__ == '__main__':

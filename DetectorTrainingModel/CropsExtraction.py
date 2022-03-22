@@ -1,4 +1,5 @@
 import os
+import sys
 import glob
 
 import cv2 as cv
@@ -56,10 +57,14 @@ def crop_img(input_path_, output_path_, out_size_, ori_size_):
             j += 1
 
 
-if __name__ == '__main__':
+def main(args):
     reset = True
     if reset is True:
         if os.path.isdir(output_path):
             rmtree(output_path)
             os.mkdir(output_path)
         crop_img(input_path, output_path, out_size, ori_size)
+
+
+if __name__ == '__main__':
+    main(sys.argv)

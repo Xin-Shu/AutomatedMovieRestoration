@@ -13,9 +13,14 @@ if __name__ == '__main__':
     import degraded_module
     import VerticalAssembly
     import SamplePicking
+    import CropsExtraction
 
     print(f'INFO: Running script DeFramePicking...')
     DeFramePicking.main(sys.argv)
+    os.system('cls||clear')
+
+    print(f'INFO: Running script CropsExtraction...')
+    CropsExtraction.main(sys.argv)
     os.system('cls||clear')
 
     print(f'INFO: Running script degraded_module...')
