@@ -7,12 +7,12 @@ from shutil import copyfile, rmtree
 os.environ['PYOPENCL_COMPILER_OUTPUT'] = '1'
 os.environ['PYOPENCL_CTX'] = '1'
 
-NUM_OF_PICKING = 200
+NUM_OF_PICKING = 100
 
 ED_ORI = 'M:/MAI_dataset/Origin_set/ED-360-png/'        # Elephents Dream
 BBB_ORI = 'M:/MAI_dataset/Origin_set/BBB-360-png/'      # Big Buck Bunny
-TOS_ORI = 'M:/MAI_dataset/Origin_set/TOS-1080-png/'       # Tear of Steel
-ST_ORI = 'M:/MAI_dataset/Origin_set/TOS-1080-png/'      # Sintel Trailer
+TOS_ORI = 'M:/MAI_dataset/Origin_set/TOS-1080-png/'     # Tear of Steel
+ST_ORI = 'M:/MAI_dataset/Origin_set/ST-720-png/'        # Sintel Trailer
 
 ED_SAMPLE = 'M:/MAI_dataset/Origin_set/ED-sample/'      # Elephents Dream
 BBB_SAMPLE = 'M:/MAI_dataset/Origin_set/BBB-sample/'    # Big Buck Bunny

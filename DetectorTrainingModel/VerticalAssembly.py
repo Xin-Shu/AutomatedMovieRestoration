@@ -1,9 +1,11 @@
 import os
 import sys
 
+import random
 import cv2 as cv
 import numpy as np
 from tqdm import tqdm
+
 from DatasetPerparation import output_size
 
 os.environ['PYOPENCL_COMPILER_OUTPUT'] = '1'
@@ -47,6 +49,7 @@ def vertically_assembly(name, reset):
     )
     print(f'\nINFO: Got dataset: {len(frameFiles_path)} degraded images, {len(maskFiles_path)} masks.\n')
 
+    totalNum = 0
     for index in tqdm(range(1, len(frameFiles_path) - 1), bar_format='{percentage:3.0f}%|{bar:100}{r_bar}'):
 
         img1 = cv.imread(frameFiles_path[index - 1], cv.IMREAD_GRAYSCALE)
@@ -57,15 +60,25 @@ def vertically_assembly(name, reset):
         mask2 = cv.imread(maskFiles_path[index], cv.IMREAD_GRAYSCALE)
         mask3 = cv.imread(maskFiles_path[index + 1], cv.IMREAD_GRAYSCALE)
 
-        ori_size = img1.shape       # e.g., (545, 1280)
+        ori_size = img2.shape       # e.g., (545, 1280)
+        scratches_x = [int(ori_size[1] / 5), int(ori_size[1] / 2), int(ori_size[1] / 1.2)]
+        # print('scratches_x', scratches_x)
+
         i, j = 0, 0
         width, height = new_size[0], int(new_size[1] / 3)
         while height * (j + 1) <= ori_size[0]:
 
             topLeft_y = height * j
             i = 0
-            while width * (i + 1) <= ori_size[1]:
-                topLeft_x = width * i
+            for scratch_x in scratches_x:
+                # print('scratch_x', scratch_x)
+
+                topLeft_x = scratch_x - random.randint(int(new_size[0] * 0.1), int(new_size[0] * 0.9))
+
+                if topLeft_x + width > ori_size[1]:
+                    topLeft_x = ori_size[1] - width - 1
+                if topLeft_x < 0:
+                    topLeft_x = 0
 
                 frameCrop_1 = img1[topLeft_y:topLeft_y + height, topLeft_x:topLeft_x + width]
                 frameCrop_2 = img2[topLeft_y:topLeft_y + height, topLeft_x:topLeft_x + width]
@@ -81,9 +94,11 @@ def vertically_assembly(name, reset):
                 cv.imwrite(f'{to_mask_folder}/mask{index}-{i + 1}-{j + 1}.png', maskAssembly)
 
                 i += 1
-
+                totalNum += 1
 
             j += 1
+
+    print(f'\nINFO: Got {totalNum} of assembled frames from {name}.')
 
 
 def main(args):

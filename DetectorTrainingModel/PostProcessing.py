@@ -1,4 +1,9 @@
-#  type in date and attempt number
+"""
+This
+
+FOR USAGE:
+    type in date and attempt number
+"""
 import os
 import sys
 import cv2 as cv
@@ -43,16 +48,16 @@ def draw_mask_over_degraded_frame(frame_folder, mask_folder, out_folder_):
         mask_over_ori[:, :, 1] = np.clip((mask_over_ori[:, :, 1] - mask / 255 * 150), 0.0, 255.0)
         mask_over_ori[:, :, 2] = np.clip((mask_over_ori[:, :, 2] + mask / 255 * 150), 0.0, 255.0)
 
-        cv.imshow('frame', cv.resize(frame, display_size))
-        cv.imshow('mask', cv.resize(mask, display_size))
-        cv.imshow('mask_over_ori', cv.resize(mask_over_ori, display_size))
-        cv.moveWindow('frame', int(- display_size[0] * 2.5 + 10), 10)
-        cv.moveWindow('mask', int(- display_size[0] * 1.5 + 10), 10)
-        cv.moveWindow('mask_over_ori', int(- display_size[0] * 2.5 + 10), 10 + display_size[1])
+        # cv.imshow('frame', cv.resize(frame, display_size))
+        # cv.imshow('mask', cv.resize(mask, display_size))
+        # cv.imshow('mask_over_ori', cv.resize(mask_over_ori, display_size))
+        # cv.moveWindow('frame', int(- display_size[0] * 2.5 + 10), 10)
+        # cv.moveWindow('mask', int(- display_size[0] * 1.5 + 10), 10)
+        # cv.moveWindow('mask_over_ori', int(- display_size[0] * 2.5 + 10), 10 + display_size[1])
 
         cv.imwrite(f'{out_folder_}/{os.path.basename(frame_path[i])}', mask_over_ori)
 
-        cv.waitKey(1)
+        # cv.waitKey(1)
 
 
 def main(args):

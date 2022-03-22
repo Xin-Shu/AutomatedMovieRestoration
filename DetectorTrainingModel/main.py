@@ -53,6 +53,7 @@ def load_dataset_path(input_dir_, target_dir_):
 
 
 class ImageLoading(keras.utils.Sequence):
+
     def __init__(self, batch_size_, img_size_, input_img_paths_, target_img_paths_):
         self.batch_size = batch_size_
         self.img_size = img_size_
@@ -235,7 +236,7 @@ def main(args):
 
     train_gen, _, _, _ = validation_split(input_img_paths, target_img_paths, 0)
     val_gen, _, _, _ = validation_split(valid_img, valid_mask, 0)
-    _, test_gen, test_input_img_path, test_target_img_path = validation_split(test_img, test_mask, 1)
+    test_gen, _, test_input_img_path, test_target_img_path = validation_split(test_img, test_mask, 1)
 
     '''Free up RAM in case the model definition cells were run multiple times'''
     keras.backend.clear_session()

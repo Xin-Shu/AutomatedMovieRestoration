@@ -6,8 +6,7 @@ import random
 import cv2 as cv
 import numpy as np
 from tqdm import tqdm
-from DatasetPerparation import output_size
-from pyopencl.tools import get_test_platforms_and_devices
+from shutil import rmtree
 
 os.environ['PYOPENCL_COMPILER_OUTPUT'] = '1'
 os.environ['PYOPENCL_CTX'] = '1'
@@ -22,11 +21,35 @@ def makeLineProfile(cols, pos, amplitude, damping, m, row, w):
     return profile
 
 
-def degraded_module(name, resol):
+def addGrainEffect(imageIN):
+
+    """
+    This method is to add gaussian grain effect to the input image.
+    :param imageIN:
+    :return imageIN + gaussNoise:
+    """
+    row, col = imageIN.shape
+
+    mean, variance = 0, 100
+    sigma = variance ** 0.5
+    gaussNoise = np.random.normal(mean, sigma, row * col)
+    gaussNoise = gaussNoise.reshape(row, col)
+
+    return imageIN + gaussNoise
+
+
+def degraded_module(name, resol, if_reset):
 
     org_folder = f'M:/MAI_dataset/Origin_set/{name}-sample'
+
     degrade_folder = f'M:/MAI_dataset/Degraded_set/SAMPLE-{name}/frame'
     mask_folder = f'M:/MAI_dataset/Degraded_set/SAMPLE-{name}/mask'
+
+    if if_reset:
+        rmtree(degrade_folder)
+        rmtree(mask_folder)
+        os.mkdir(degrade_folder)
+        os.mkdir(mask_folder)
 
     if os.path.isdir(org_folder) is False:
         import warnings
@@ -41,7 +64,7 @@ def degraded_module(name, resol):
         scratch_num_list = []
         ori_size = cv.imread(org_folder + f'/{pngFiles[0]}').shape  # e.g., (545, 1280, 3)
 
-        line_pos_set, brightness_set = [int(ori_size[1]/5), int(ori_size[1]/2), int(ori_size[1]/1.2)], 70
+        line_pos_set, brightness_set = [int(ori_size[1]/5), int(ori_size[1]/2), int(ori_size[1]/1.2)], 120
         count = 0
         time_now = time.time()
         print(f'\nProcessing filme [{name}], {len(pngFiles)} frames in total')
@@ -52,11 +75,12 @@ def degraded_module(name, resol):
             fullName = os.path.join(org_folder, frameName)
             frame_org = cv.imread(fullName)
             gray_frame = cv.cvtColor(frame_org, cv.COLOR_RGB2GRAY)  # 1 / 5 of 1080p
+
             rows, cols = gray_frame.shape
             binary_mask = np.zeros([rows, cols, 1], 'double')
             degrade = gray_frame
             degrade2 = degrade
-            scratch_num = 1 + random.randint(0, 2)
+            scratch_num = 1 + random.randint(2, 2)
             scratch_num_list.append(scratch_num)
 
             temp_brightness = brightness_set
@@ -69,10 +93,12 @@ def degraded_module(name, resol):
                 else:
                     temp_line_pos_set[line_num - 1] = line_pos
                 w = 2 + random.randrange(1, max_width + 2, 2)
-                a = (random.uniform(-2, 2) * np.sqrt(0.1) + 1) * temp_brightness + random.uniform(-1, 1)
+                a = (random.uniform(-0.5, 0.5) * np.sqrt(0.1) + 1) * temp_brightness
                 temp_brightness = a
-                if temp_brightness >= 130 or temp_brightness <= 20:
-                    temp_brightness = brightness_set
+                if temp_brightness >= 230:
+                    temp_brightness = 230
+                if temp_brightness <= 20:
+                    temp_brightness = 20
                 if line_pos - w > 0:
                     left_boundary = line_pos - int(np.floor(w / 2))
                 else:
@@ -89,10 +115,12 @@ def degraded_module(name, resol):
                 slope = random.uniform(-1, 1) * 0.0001
                 for n in range(0, rows):
                     profile = makeLineProfile(cols, line_pos, (a - 50), 0.25, slope, n, w)
-                    temp = degrade2[n, left_boundary:right_boundary] + profile[left_boundary:right_boundary] * 0.3
+                    temp = degrade2[n, left_boundary:right_boundary] + profile[left_boundary:right_boundary] * 0.4
                     np.place(temp, temp > 255.0, 255.0)
                     np.place(temp, temp < 0.0, 0.0)
                     degrade2[n, left_boundary:right_boundary] = temp
+
+            degrade2 = addGrainEffect(degrade2)
 
             degradedFullName = degrade_folder + f'/{count:05d}' + '.png'
             maskFullName = mask_folder + f'/{count:05d}' + '.png'
@@ -109,7 +137,7 @@ def degraded_module(name, resol):
 def main(args):
     film_name = [['ST', 'ST(cut)-720'], ['BBB', 'BBB-360'], ['ED', 'ED-360'], ['TOS', 'TOS-1080']]
     for name, resol in film_name:
-        degraded_module(name, resol)
+        degraded_module(name, resol, 1)
         print(f'INFO: Finished picture processing of film: {name}!')
 
 
