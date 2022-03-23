@@ -1,12 +1,12 @@
 import os
 import sys
-import PIL
-import random
+
+import cv2 as cv
 import numpy as np
+from tqdm import tqdm
 from shutil import rmtree
 from datetime import date
 import matplotlib.pyplot as plt
-import cv2 as cv
 
 import tensorflow as tf
 from tensorflow import keras
@@ -137,7 +137,7 @@ def training(train_gen, val_gen, num_classes_, img_size_, use_pretrained, result
     global result_dir
     model_path = f'{result_attempt_dir}/generalDegradedDetection.h5'
     if use_pretrained:
-        model_path = 'M:/MAI_dataset/TrainedModels/02-17/Attempt 2/generalDegradedDetection.h5'
+        model_path = 'M:/MAI_dataset/TrainedModels/03-23/Attempt 1/generalDegradedDetection.h5'
         print(f'INFO: Using pre-trained model from: {model_path}')
         model = keras.models.load_model(model_path, compile=False)
         test_preds = model.predict(test_gen)
@@ -192,15 +192,17 @@ def convert_array_to_imgs(result_attempt_dir, input_degraded_img_path, ground_tr
         rmtree(f'{result_attempt_dir}/mask')
     if os.path.isdir(f'{result_attempt_dir}/degraded'):
         rmtree(f'{result_attempt_dir}/degraded')
-    os.mkdir(f'{result_attempt_dir}/pred_over_ori')
+    # os.mkdir(f'{result_attempt_dir}/pred_over_ori')
     os.mkdir(f'{result_attempt_dir}/mask')
     os.mkdir(f'{result_attempt_dir}/degraded')
 
     index = 0
     print(f'INFO: Predictions saved in the following path: {result_attempt_dir}/degraded/')
-    for degraded_img_path in input_degraded_img_path:
+    for degraded_img_path in tqdm(input_degraded_img_path, bar_format='{percentage:3.0f}%|{bar:100}{r_bar}'):
         degraded_img = cv.imread(degraded_img_path, cv.IMREAD_GRAYSCALE)
-        degraded_img = cv.resize(degraded_img, [img_size[1], img_size[0]])
+
+        if index > len(test_preds - 1):
+            break
 
         __mask = np.argmax(test_preds[index], axis=-1)
         __mask = np.expand_dims(__mask, axis=-1)

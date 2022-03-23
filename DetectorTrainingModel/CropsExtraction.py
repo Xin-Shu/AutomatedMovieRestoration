@@ -24,7 +24,7 @@ output_path = 'M:/MAI_dataset/tempSamples/test_set/frame/'
 
 
 def crop_img(input_path_, output_path_, out_size_, ori_size_):
-    width, height = out_size_[0], out_size_[1]
+    width, height = out_size_[0], int(out_size_[1] / 3)
     input_img_paths = glob.glob(f'{input_path_}/*.bmp')
     count_frame = 0
     for index in tqdm(range(1, len(input_img_paths) - 1), bar_format='{percentage:3.0f}%|{bar:100}{r_bar}'):
@@ -49,8 +49,8 @@ def crop_img(input_path_, output_path_, out_size_, ori_size_):
                 crop2 = input_img2[topleft_y:topleft_y + height, topleft_x:topleft_x + width]
                 crop3 = input_img3[topleft_y:topleft_y + height, topleft_x:topleft_x + width]
                 crop_vertical_3 = np.concatenate((crop1, crop2, crop3), axis=0)
-                crop_vertical_3 = cv.resize(crop_vertical_3, out_size)
-                cv.imwrite(f'{output_path_}frame{count_frame}-{i + 1}-{j + 1}.png', crop_vertical_3)
+                # crop_vertical_3 = cv.resize(crop_vertical_3, out_size)
+                cv.imwrite(f'{output_path_}frame{count_frame:03d}-{(i + 1):03d}-{(j + 1):03d}.png', crop_vertical_3)
 
                 i += 1
 

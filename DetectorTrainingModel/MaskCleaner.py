@@ -39,12 +39,13 @@ def MaskCleaner(frameIN_PATH, maskIN_PATH, frameOUT_PATH, maskOUT_PATH, maskEnti
     )
 
     # Define a zero matrix that has the same shape as the degraded frame
-    maskAssembled = np.zeros([ori_size[0], ori_size[1]], dtype="uint8")
+    maskAssembled = np.zeros([ori_size[1], ori_size[0]], dtype="uint8")
     maskWidth, maskHeight = output_size[0], int(output_size[1] / 3),
 
     maskFrameNum_mark = 1
 
-    for i in tqdm(range(0, len(maskIN)), bar_format='{percentage:3.0f}%|{bar:100}{r_bar}'):
+    # for i in tqdm(range(0, len(maskIN)), bar_format='{percentage:3.0f}%|{bar:100}{r_bar}'):
+    for i in range(0, len(maskIN)):
 
         frame_ori = cv.imread(frameIN[i], cv.IMREAD_GRAYSCALE)
 
@@ -70,19 +71,22 @@ def MaskCleaner(frameIN_PATH, maskIN_PATH, frameOUT_PATH, maskOUT_PATH, maskEnti
                 maskOUT[:, col] = 0
 
         frameName = os.path.basename(maskIN[i])
-        maskFrameNum, maskColNum, maskRowNum = int(frameName[5:-8]), int(frameName[-7]), int(frameName[-5])
+        maskFrameNum, maskColNum, maskRowNum = int(frameName[5:8]), int(frameName[9:12]), int(frameName[13:16])
 
         topLeft_x, topLeft_y = maskWidth * (maskColNum - 1), maskHeight * (maskRowNum - 1)
-        if topLeft_y + maskHeight <= ori_size[1] and topLeft_x + maskWidth < ori_size[0]:
+        print(f'maskFrameNum: {maskFrameNum}, maskColNum: {maskColNum}, maskRowNum: {maskRowNum}')
+        print(f'topLeft_x: {topLeft_x}， topLeft_y： {topLeft_y}')
+
+        if maskAssembled[topLeft_y:topLeft_y + maskHeight, topLeft_x:topLeft_x + maskWidth].shape == (60, 320):
+
             maskAssembled[topLeft_y:topLeft_y + maskHeight, topLeft_x:topLeft_x + maskWidth] = maskOUT
 
         if maskFrameNum_mark != maskFrameNum:
 
-            cv.imshow("Entire mask", maskAssembled)
-            cv.waitKey(0)
+            # print(f'Frmae: {maskFrameNum}')
+            cv.imshow("Entire mask", cv.resize(maskAssembled, [1218, 888]))
+            cv.waitKey(1)
             maskFrameNum_mark = maskFrameNum
-
-        print(maskFrameNum, '   ', maskColNum, '   ', maskRowNum)
 
         # cleanedOverlay = cv.cvtColor(frame_ori, cv.COLOR_GRAY2RGB)
         # # cleanedOverlay[:, :, 0] = np.clip((cleanedOverlay[:, :, 0] - maskOUT * 150), 0.0, 255.0)
@@ -97,8 +101,10 @@ def MaskCleaner(frameIN_PATH, maskIN_PATH, frameOUT_PATH, maskOUT_PATH, maskEnti
 
 def main(args):
 
-    date_ = input("Date of training results: ")
-    attempt_ = input(f"Attempt number on {date_}: ")
+    # date_ = input("Date of training results: ")
+    # attempt_ = input(f"Attempt number on {date_}: ")\
+    date_ = '03-23'
+    attempt_ = '1'
 
     degraded_frame_folder = f'M:/MAI_dataset/TrainedModels/{date_}/Attempt {attempt_}/degraded/'
     predicted_mask_folder = f'M:/MAI_dataset/TrainedModels/{date_}/Attempt {attempt_}/mask/'
