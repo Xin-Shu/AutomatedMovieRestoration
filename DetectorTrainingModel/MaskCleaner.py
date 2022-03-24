@@ -29,7 +29,7 @@ def MaskCleaner(frameIN_PATH, maskIN_PATH, frameOUT_PATH, maskOUT_PATH, maskEnti
     frameIN = sorted([
         os.path.join(frameIN_PATH, fname)
         for fname in os.listdir(frameIN_PATH)
-        if fname.endswith(".png")]
+        if fname.endswith(".bmp")]
     )
 
     maskIN = sorted([
@@ -47,8 +47,6 @@ def MaskCleaner(frameIN_PATH, maskIN_PATH, frameOUT_PATH, maskOUT_PATH, maskEnti
     # for i in tqdm(range(0, len(maskIN)), bar_format='{percentage:3.0f}%|{bar:100}{r_bar}'):
     for i in range(0, len(maskIN)):
 
-        frame_ori = cv.imread(frameIN[i], cv.IMREAD_GRAYSCALE)
-
         mask_ori = cv.imread(maskIN[i], cv.IMREAD_GRAYSCALE)
         mask_shape = mask_ori.shape                     # e.g., (180, 320)
 
@@ -63,12 +61,17 @@ def MaskCleaner(frameIN_PATH, maskIN_PATH, frameOUT_PATH, maskOUT_PATH, maskEnti
         maskOUT = np.zeros([mask_shape[0] // 3, mask_shape[1]], dtype="uint8")
         threshold = 10
 
-        for col in range(0, len(energy_of_current_frame)):
+        # for col in range(0, len(energy_of_current_frame)):
+        #
+        #     if energy_of_current_frame[col] >= threshold:
+        #         maskOUT[:, col] = 255
+        #     else:
+        #         maskOUT[:, col] = 0
 
-            if energy_of_current_frame[col] >= threshold:
-                maskOUT[:, col] = 255
-            else:
-                maskOUT[:, col] = 0
+        threshold = 128.0 / 2
+        maskOUT = maskIN_2 * 0.5 + (maskIN_1 + maskIN_3) * 0.25
+        maskOUT[maskOUT > threshold] = 255
+        maskOUT[maskOUT <= threshold] = 0
 
         frameName = os.path.basename(maskIN[i])
         maskFrameNum, maskColNum, maskRowNum = int(frameName[5:8]), int(frameName[9:12]), int(frameName[13:16])
@@ -83,9 +86,21 @@ def MaskCleaner(frameIN_PATH, maskIN_PATH, frameOUT_PATH, maskOUT_PATH, maskEnti
 
         if maskFrameNum_mark != maskFrameNum:
 
-            # print(f'Frmae: {maskFrameNum}')
-            cv.imshow("Entire mask", cv.resize(maskAssembled, [1218, 888]))
-            cv.waitKey(1)
+            frame_ori = cv.imread(frameIN[maskFrameNum_mark], cv.IMREAD_GRAYSCALE)
+            cleanedOverlay = cv.cvtColor(frame_ori, cv.COLOR_GRAY2RGB)
+
+            threshold_EntireMask = 15
+            maskEnergy = maskAssembled.sum(axis=0) / 255
+            for col in range(0, len(maskEnergy)):
+
+                if maskEnergy[col] >= threshold_EntireMask:
+                    maskAssembled[:, col] = 255
+                else:
+                    maskAssembled[:, col] = 0
+
+            cleanedOverlay[:, :, 1] = np.clip((cleanedOverlay[:, :, 1] - maskAssembled / 255 * 230), 0.0, 255.0)
+            cv.imwrite(f'{maskEntireOUT_PATH}/{os.path.basename(frameIN[maskFrameNum_mark])}', cleanedOverlay)
+            cv.imwrite(f'{maskEntireOUT_PATH}/{os.path.basename(maskIN[i])}', maskAssembled)
             maskFrameNum_mark = maskFrameNum
 
         # cleanedOverlay = cv.cvtColor(frame_ori, cv.COLOR_GRAY2RGB)
@@ -101,12 +116,12 @@ def MaskCleaner(frameIN_PATH, maskIN_PATH, frameOUT_PATH, maskOUT_PATH, maskEnti
 
 def main(args):
 
-    # date_ = input("Date of training results: ")
-    # attempt_ = input(f"Attempt number on {date_}: ")\
-    date_ = '03-23'
-    attempt_ = '1'
+    date_ = input("Date of training results: ")
+    attempt_ = input(f"Attempt number on {date_}: ")
+    # date_ = '03-23'
+    # attempt_ = '1'
 
-    degraded_frame_folder = f'M:/MAI_dataset/TrainedModels/{date_}/Attempt {attempt_}/degraded/'
+    degraded_frame_folder = f'M:/MAI_dataset/Sequence_lines_1/'
     predicted_mask_folder = f'M:/MAI_dataset/TrainedModels/{date_}/Attempt {attempt_}/mask/'
     frameOut_folder = f'M:/MAI_dataset/TrainedModels/{date_}/Attempt {attempt_}/cleaned_mask_over_frame/'
     maskOut_folder = f'M:/MAI_dataset/TrainedModels/{date_}/Attempt {attempt_}/cleaned_mask/'

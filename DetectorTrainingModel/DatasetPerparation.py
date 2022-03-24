@@ -4,6 +4,7 @@ Main script that calls every script that should run for perparing dataset.
 
 import os
 import sys
+import datetime
 
 output_size = (320, 180)
 
@@ -14,6 +15,8 @@ if __name__ == '__main__':
     import VerticalAssembly
     import SamplePicking
     import CropsExtraction
+
+    timeStamp = datetime.datetime.now()
 
     print(f'INFO: Running script DeFramePicking...')
     DeFramePicking.main(sys.argv)
@@ -35,5 +38,6 @@ if __name__ == '__main__':
     SamplePicking.main(sys.argv)
     os.system('cls||clear')
 
-    print(f'INFO: Finished dataset preparation!!!')
+    timeDiffer = datetime.datetime.now() - timeStamp
+    print(f'INFO: Finished dataset preparation, total time taken: {timeDiffer}.')
 
