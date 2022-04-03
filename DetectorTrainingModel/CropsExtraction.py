@@ -27,16 +27,16 @@ def crop_img(input_path_, output_path_, out_size_, ori_size_):
     width, height = out_size_[0], int(out_size_[1] / 3)
     input_img_paths = glob.glob(f'{input_path_}/*.bmp')
     count_frame = 0
-    for index in tqdm(range(1, len(input_img_paths) - 1), bar_format='{percentage:3.0f}%|{bar:100}{r_bar}'):
+    for index in tqdm(range(1, len(input_img_paths) - 20), bar_format='{percentage:3.0f}%|{bar:100}{r_bar}'):
         count_frame += 1
         input_img1 = cv.imread(input_img_paths[index - 1])
         input_img2 = cv.imread(input_img_paths[index])
         input_img3 = cv.imread(input_img_paths[index + 1])
 
         i, j = 0, 0
-        while height * (j + 1) <= ori_size_[1]:
+        while height * j <= ori_size_[1]:
             i = 0
-            while width * (i + 1) <= ori_size_[0]:
+            while width * i <= ori_size_[0]:
 
                 topleft_x, topleft_y = i * width, j * height
 

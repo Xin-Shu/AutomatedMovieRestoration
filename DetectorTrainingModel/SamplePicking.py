@@ -7,19 +7,6 @@ from shutil import copyfile
 os.environ['PYOPENCL_COMPILER_OUTPUT'] = '1'
 os.environ['PYOPENCL_CTX'] = '1'
 
-# # Elephents Dream
-# ED_DEGRADED = 'M:/MAI_dataset/Degraded_set/ED/frame/'
-# ED_MASK = 'M:/MAI_dataset/Degraded_set/ED/mask/'
-# # Big Buck Bunny
-# BBB_DEGRADED = 'M:/MAI_dataset/Degraded_set/BBB/frame/'
-# BBB_MASK = 'M:/MAI_dataset/Degraded_set/BBB/mask/'
-# # Tear of Steel
-# TOS_DEGRADED = 'M:/MAI_dataset/Degraded_set/TOS/frame/'
-# TOS_MASK = 'M:/MAI_dataset/Degraded_set/TOS/mask/'
-# # Sintel Trailer
-# ST_DEGRADED = 'M:/MAI_dataset/Degraded_set/ST/frame/'
-# ST_MASK = 'M:/MAI_dataset/Degraded_set/ST/mask/'
-
 # Elephents Dream
 ED_DEGRADED = 'M:/MAI_dataset/Degraded_set/VA-ED/frame/'
 ED_MASK = 'M:/MAI_dataset/Degraded_set/VA-ED/mask/'
@@ -33,11 +20,12 @@ TOS_MASK = 'M:/MAI_dataset/Degraded_set/VA-TOS/mask/'
 ST_DEGRADED = 'M:/MAI_dataset/Degraded_set/VA-ST/frame/'
 ST_MASK = 'M:/MAI_dataset/Degraded_set/VA-ST/mask/'
 
-count = 0
+countTrain, countValid = 0, 0
+numSamples = 300
 
 
 def sampling_frames(degraded_path, mask_path, name):
-    global count
+    global countTrain, countValid
     for path_temp in [degraded_path, mask_path]:
         if os.path.isdir(path_temp) is False:
             import warnings
@@ -57,34 +45,32 @@ def sampling_frames(degraded_path, mask_path, name):
     )
     totalFrames = len(frameFiles)
 
-    if name == 'ST':
-        count_st = 0
-        list_num_of_sample = random.sample(range(0, totalFrames), 1500)
-        print(f'\nProcessing validation set [{name}]: '
-              f'randomly pick {len(list_num_of_sample)} from {totalFrames} frames.')
-        for num in tqdm(list_num_of_sample, bar_format='{percentage:3.0f}%|{bar:100}{r_bar}'):
-            count_st += 1
-            frame_from_path = frameFiles[num]
-            frame_to_path = 'M:/MAI_dataset/tempSamples/valid_set/frame/' + 'frame-{:04}'.format(count_st) + '.png'
-            copyfile(frame_from_path, frame_to_path)
+    indexTrainSample = random.sample(range(0, int(totalFrames * 0.75)), int(numSamples * 0.75))
+    indexValidSample = random.sample(range(int(totalFrames * 0.75), totalFrames), int(numSamples * 0.25))
 
-            mask_from_path = maskFiles[num]
-            mask_to_path = 'M:/MAI_dataset/tempSamples/valid_set/mask/' + 'frame-{:04}'.format(count_st) + '.png'
-            copyfile(mask_from_path, mask_to_path)
+    print(f'\nProcessing training set [{name}]: '
+          f'randomly pick {len(indexTrainSample)} from {totalFrames} frames.')
+    for num in tqdm(indexTrainSample, bar_format='{percentage:3.0f}%|{bar:100}{r_bar}'):
+        countTrain += 1
+        frame_from_path = frameFiles[num]
+        frame_to_path = 'M:/MAI_dataset/tempSamples/train_set/degraded/' + 'frame-{:04}'.format(countTrain) + '.png'
+        copyfile(frame_from_path, frame_to_path)
 
-    else:
-        list_num_of_sample = random.sample(range(0, totalFrames), 1500)
-        print(f'\nProcessing training set [{name}]: '
-              f'randomly pick {len(list_num_of_sample)} from {totalFrames} frames.')
-        for num in tqdm(list_num_of_sample, bar_format='{percentage:3.0f}%|{bar:100}{r_bar}'):
-            count += 1
-            frame_from_path = frameFiles[num]
-            frame_to_path = 'M:/MAI_dataset/tempSamples/train_set/degraded/' + 'frame-{:04}'.format(count) + '.png'
-            copyfile(frame_from_path, frame_to_path)
+        mask_from_path = maskFiles[num]
+        mask_to_path = 'M:/MAI_dataset/tempSamples/train_set/mask/' + 'frame-{:04}'.format(countTrain) + '.png'
+        copyfile(mask_from_path, mask_to_path)
 
-            mask_from_path = maskFiles[num]
-            mask_to_path = 'M:/MAI_dataset/tempSamples/train_set/mask/' + 'frame-{:04}'.format(count) + '.png'
-            copyfile(mask_from_path, mask_to_path)
+    print(f'\nProcessing training set [{name}]: '
+          f'randomly pick {len(indexValidSample)} from {totalFrames} frames.')
+    for num in tqdm(indexValidSample, bar_format='{percentage:3.0f}%|{bar:100}{r_bar}'):
+        countValid += 1
+        frame_from_path = frameFiles[num]
+        frame_to_path = 'M:/MAI_dataset/tempSamples/valid_set/frame/' + 'frame-{:04}'.format(countValid) + '.png'
+        copyfile(frame_from_path, frame_to_path)
+
+        mask_from_path = maskFiles[num]
+        mask_to_path = 'M:/MAI_dataset/tempSamples/valid_set/mask/' + 'frame-{:04}'.format(countValid) + '.png'
+        copyfile(mask_from_path, mask_to_path)
 
 
 def main(args):

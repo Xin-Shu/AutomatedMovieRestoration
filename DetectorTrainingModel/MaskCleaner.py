@@ -54,22 +54,22 @@ def MaskCleaner(frameIN_PATH, maskIN_PATH, frameOUT_PATH, maskOUT_PATH, maskEnti
         maskIN_2 = mask_ori[int(mask_shape[0] / 3):int(mask_shape[0] / 3 * 2), :]
         maskIN_3 = mask_ori[int(mask_shape[0] / 3 * 2):mask_shape[0], :]
 
-        sum_1, sum_2, sum_3 = maskIN_1.sum(axis=0) / 255, maskIN_2.sum(axis=0) / 255, maskIN_3.sum(axis=0) / 255
+        sum_1, sum_2, sum_3 = maskIN_1.sum(axis=0), maskIN_2.sum(axis=0), maskIN_3.sum(axis=0)
 
-        energy_of_current_frame = sum_1 * 1 + sum_2 * 4 + sum_3 * 1
+        energy_of_current_frame = sum_1 * 0.25 + sum_2 * 0.5 + sum_3 * 0.25
 
         maskOUT = np.zeros([mask_shape[0] // 3, mask_shape[1]], dtype="uint8")
-        threshold = 10
+        threshold = 200.0
 
-        # for col in range(0, len(energy_of_current_frame)):
-        #
-        #     if energy_of_current_frame[col] >= threshold:
-        #         maskOUT[:, col] = 255
-        #     else:
-        #         maskOUT[:, col] = 0
+        for col in range(0, len(energy_of_current_frame)):
 
-        threshold = 128.0 / 2
-        maskOUT = maskIN_2 * 0.5 + (maskIN_1 + maskIN_3) * 0.25
+            if energy_of_current_frame[col] >= threshold:
+                maskOUT[:, col] = 255
+            else:
+                maskOUT[:, col] = 0
+
+        # threshold = 128.0 / 2
+        # maskOUT = maskIN_2 * 0.5 + (maskIN_1 + maskIN_3) * 0.25
         maskOUT[maskOUT > threshold] = 255
         maskOUT[maskOUT <= threshold] = 0
 
@@ -77,26 +77,30 @@ def MaskCleaner(frameIN_PATH, maskIN_PATH, frameOUT_PATH, maskOUT_PATH, maskEnti
         maskFrameNum, maskColNum, maskRowNum = int(frameName[5:8]), int(frameName[9:12]), int(frameName[13:16])
 
         topLeft_x, topLeft_y = maskWidth * (maskColNum - 1), maskHeight * (maskRowNum - 1)
-        print(f'maskFrameNum: {maskFrameNum}, maskColNum: {maskColNum}, maskRowNum: {maskRowNum}')
-        print(f'topLeft_x: {topLeft_x}， topLeft_y： {topLeft_y}')
+        # print(f'maskFrameNum: {maskFrameNum}, maskColNum: {maskColNum}, maskRowNum: {maskRowNum}')
+        # print(f'topLeft_x: {topLeft_x}， topLeft_y： {topLeft_y}')
 
-        if maskAssembled[topLeft_y:topLeft_y + maskHeight, topLeft_x:topLeft_x + maskWidth].shape == (60, 320):
+        if maskAssembled[topLeft_y:topLeft_y + maskHeight, topLeft_x:topLeft_x + maskWidth].shape == maskOUT.shape:
 
             maskAssembled[topLeft_y:topLeft_y + maskHeight, topLeft_x:topLeft_x + maskWidth] = maskOUT
+        else:
+            tempMaskShape = maskAssembled[topLeft_y:topLeft_y + maskHeight, topLeft_x:topLeft_x + maskWidth].shape
+            maskAssembled[topLeft_y:topLeft_y + maskHeight, topLeft_x:topLeft_x + maskWidth] = \
+                maskOUT[-tempMaskShape[0]:, -tempMaskShape[1]:]
 
         if maskFrameNum_mark != maskFrameNum:
 
             frame_ori = cv.imread(frameIN[maskFrameNum_mark], cv.IMREAD_GRAYSCALE)
             cleanedOverlay = cv.cvtColor(frame_ori, cv.COLOR_GRAY2RGB)
 
-            threshold_EntireMask = 15
-            maskEnergy = maskAssembled.sum(axis=0) / 255
-            for col in range(0, len(maskEnergy)):
-
-                if maskEnergy[col] >= threshold_EntireMask:
-                    maskAssembled[:, col] = 255
-                else:
-                    maskAssembled[:, col] = 0
+            # threshold_EntireMask = 15
+            # maskEnergy = maskAssembled.sum(axis=0) / 255
+            # for col in range(0, len(maskEnergy)):
+            #
+            #     if maskEnergy[col] >= threshold_EntireMask:
+            #         maskAssembled[:, col] = 255
+            #     else:
+            #         maskAssembled[:, col] = 0
 
             cleanedOverlay[:, :, 1] = np.clip((cleanedOverlay[:, :, 1] - maskAssembled / 255 * 230), 0.0, 255.0)
             cv.imwrite(f'{maskEntireOUT_PATH}/{os.path.basename(frameIN[maskFrameNum_mark])}', cleanedOverlay)

@@ -24,7 +24,8 @@ test_img_dir = 'M:/MAI_dataset/tempSamples/test_set/frame/'
 test_mask_dir = "M:/MAI_dataset/tempSamples/valid_set/mask/"
 img_size = (180, 320)   # np.multiply((270, 480), 0.8).astype(int)  # (270, 480)(360, 640)(180, 320)(189, 336)
 num_classes = 2
-batch_size = 2
+batch_size_train = 2
+batch_size_test = 2
 
 date = date.today().strftime("%m-%d")
 result_dir = f'M:/MAI_dataset/TrainedModels/{date}'
@@ -68,11 +69,11 @@ class ImageLoading(keras.utils.Sequence):
         i = idx * self.batch_size
         batch_input_img_paths = self.input_img_paths[i:i + self.batch_size]
         batch_target_img_paths = self.target_img_paths[i:i + self.batch_size]
-        x = np.zeros((self.batch_size,) + self.img_size + (1,), dtype="float32")  # uint8
+        x = np.zeros((self.batch_size,) + self.img_size + (1,), dtype="uint8")  # uint8
         for j, path in enumerate(batch_input_img_paths):
             img = load_img(path, target_size=self.img_size, color_mode="grayscale")
             x[j] = np.expand_dims(img, 2)
-        y = np.zeros((self.batch_size,) + self.img_size + (1,), dtype="float32")
+        y = np.zeros((self.batch_size,) + self.img_size + (1,), dtype="uint8")
         for j, path in enumerate(batch_target_img_paths):
             img = load_img(path, target_size=self.img_size, color_mode="grayscale")
             y[j] = np.expand_dims(img, 2)
@@ -88,10 +89,10 @@ def get_model(img_size_, num_classes_):
     x1 = layers.Conv2D(32, 3, padding="same", activation="relu")(inputs)
     x1 = layers.BatchNormalization()(x1)
 
-    x2 = layers.Conv2D(64, 2, padding="same", activation="relu")(x1)
+    x2 = layers.Conv2D(64, 3, padding="same", activation="relu")(x1)
     x2 = layers.BatchNormalization()(x2)
 
-    x3 = layers.Conv2D(128, 2, padding="same", activation="relu")(x2)
+    x3 = layers.Conv2D(128, 3, padding="same", activation="relu")(x2)
     x3 = layers.BatchNormalization()(x3)
 
     encoder = layers.concatenate([x1, x2, x3])
@@ -99,7 +100,7 @@ def get_model(img_size_, num_classes_):
     encoder = layers.MaxPooling2D(pool_size=(2, 2))(encoder)
 
     y1 = layers.UpSampling2D(2)(encoder)
-    y1 = layers.Conv2DTranspose(32, 3, padding="same", activation="relu")(y1)
+    y1 = layers.Conv2DTranspose(64, 3, padding="same", activation="relu")(y1)
     y1 = layers.BatchNormalization()(y1)
 
     y2 = layers.Conv2DTranspose(32, 3, padding="same", activation="relu")(y1)
@@ -113,8 +114,8 @@ def get_model(img_size_, num_classes_):
     return model_
 
 
-def validation_split(input_img_paths, target_img_paths, if_useAll):
-    global batch_size, img_size
+def validation_split(input_img_paths, target_img_paths, batch_size, if_useAll):
+    global img_size
     num_of_samples = len(input_img_paths)
     if if_useAll:
         val_samples = num_of_samples
@@ -137,7 +138,7 @@ def training(train_gen, val_gen, num_classes_, img_size_, use_pretrained, result
     global result_dir
     model_path = f'{result_attempt_dir}/generalDegradedDetection.h5'
     if use_pretrained:
-        model_path = 'M:/MAI_dataset/TrainedModels/03-23/Attempt 1/generalDegradedDetection.h5'
+        model_path = 'M:/MAI_dataset/TrainedModels/04-02/Attempt 2/generalDegradedDetection.h5'
         print(f'INFO: Using pre-trained model from: {model_path}')
         model = keras.models.load_model(model_path, compile=False)
         test_preds = model.predict(test_gen)
@@ -154,19 +155,19 @@ def training(train_gen, val_gen, num_classes_, img_size_, use_pretrained, result
         callbacks = [
             keras.callbacks.ModelCheckpoint(model_path, save_best_only=True)
         ]
-        epochs = 50
+        epochs = 40
         history = model.fit(train_gen, epochs=epochs, validation_data=val_gen, callbacks=callbacks)
 
         # list all data in history
-        print(history.history.keys())
+        print(f'INFO: Training history keys: {history.history.keys()}')
 
         # summarize history for accuracy
         fig1 = plt.figure(figsize=(8, 6))
         plt.title("Training history - Accuracy", fontsize=20)
         plt.plot(history.history['acc'])
         plt.plot(history.history['val_acc'])
-        plt.ylabel('accuracy')
-        plt.xlabel('epoch')
+        plt.ylabel('accuracy', fontsize=18)
+        plt.xlabel('epoch', fontsize=18)
         plt.legend(['train', 'test'], loc='upper left')
         plt.savefig(f'{result_attempt_dir}/val_acc_plot.png', )
 
@@ -175,8 +176,8 @@ def training(train_gen, val_gen, num_classes_, img_size_, use_pretrained, result
         plt.title("Training history - Loss", fontsize=20)
         plt.plot(history.history['loss'])
         plt.plot(history.history['val_loss'])
-        plt.ylabel('loss')
-        plt.xlabel('epoch')
+        plt.ylabel('loss', fontsize=18)
+        plt.xlabel('epoch', fontsize=18)
         plt.legend(['train', 'test'], loc='upper right')
         plt.savefig(f'{result_attempt_dir}/val_loss_plot.png', )
         plt.show()
@@ -208,14 +209,6 @@ def convert_array_to_imgs(result_attempt_dir, input_degraded_img_path, ground_tr
         __mask = np.expand_dims(__mask, axis=-1)
         __mask = __mask * 255
 
-        # mask_over_ori = cv.cvtColor(degraded_img, cv.COLOR_GRAY2RGB)
-        # temp_mask = cv.imread(f'{result_attempt_dir}/mask/pred{(index + 1):03d}.png', cv.IMREAD_GRAYSCALE)
-        # mask_over_ori[:, :, 0] = np.clip((mask_over_ori[:, :, 0] - temp_mask * 150), 0.0, 255.0)
-        # mask_over_ori[:, :, 1] = np.clip((mask_over_ori[:, :, 1] - temp_mask * 150), 0.0, 255.0)
-        # mask_over_ori[:, :, 2] = np.clip((mask_over_ori[:, :, 2] + temp_mask * 150), 0.0, 255.0)
-
-        # cv.imwrite(f'{result_attempt_dir}/pred_over_ori/pred_over_ori{(index + 1):03d}.png', mask_over_ori)
-
         cv.imwrite(f'{result_attempt_dir}/degraded/{os.path.basename(degraded_img_path)}', degraded_img)
         cv.imwrite(f'{result_attempt_dir}/mask/{os.path.basename(degraded_img_path)}', __mask)
 
@@ -231,9 +224,9 @@ def main(args):
     valid_img, valid_mask = load_dataset_path(valid_img_dir, valid_mask_dir)
     test_img, test_mask = load_dataset_path(test_img_dir, test_mask_dir)
 
-    train_gen, _, _, _ = validation_split(input_img_paths, target_img_paths, 0)
-    val_gen, _, _, _ = validation_split(valid_img, valid_mask, 0)
-    test_gen, _, test_input_img_path, test_target_img_path = validation_split(test_img, test_mask, 1)
+    train_gen, _, _, _ = validation_split(input_img_paths, target_img_paths, batch_size_train, 0)
+    val_gen, _, _, _ = validation_split(valid_img, valid_mask, batch_size_train, 0)
+    test_gen, _, test_input_img_path, test_target_img_path = validation_split(test_img, test_mask, batch_size_test, 1)
 
     '''Free up RAM in case the model definition cells were run multiple times'''
     keras.backend.clear_session()

@@ -85,13 +85,13 @@ def vertically_assembly(name, reset):
                 frameCrop_3 = img3[topLeft_y:topLeft_y + height, topLeft_x:topLeft_x + width]
                 frameAssembly = np.concatenate((frameCrop_1, frameCrop_2, frameCrop_3), axis=0)
 
-                maskCrop_1 = mask1[topLeft_y:topLeft_y + height, topLeft_x:topLeft_x + width]
+                # maskCrop_1 = mask1[topLeft_y:topLeft_y + height, topLeft_x:topLeft_x + width]
                 maskCrop_2 = mask2[topLeft_y:topLeft_y + height, topLeft_x:topLeft_x + width]
-                maskCrop_3 = mask3[topLeft_y:topLeft_y + height, topLeft_x:topLeft_x + width]
-                maskAssembly = np.concatenate((maskCrop_1, maskCrop_2, maskCrop_3), axis=0)
+                # maskCrop_3 = mask3[topLeft_y:topLeft_y + height, topLeft_x:topLeft_x + width]
+                # maskAssembly = np.concatenate((maskCrop_1, maskCrop_2, maskCrop_3), axis=0)
 
                 cv.imwrite(f'{to_frame_folder}/frame{index}-{i + 1}-{j + 1}.png', frameAssembly)
-                cv.imwrite(f'{to_mask_folder}/mask{index}-{i + 1}-{j + 1}.png', maskAssembly)
+                cv.imwrite(f'{to_mask_folder}/mask{index}-{i + 1}-{j + 1}.png', maskCrop_2)
 
                 i += 1
                 totalNum += 1

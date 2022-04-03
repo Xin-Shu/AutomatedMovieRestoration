@@ -7,12 +7,12 @@ from shutil import copyfile, rmtree
 os.environ['PYOPENCL_COMPILER_OUTPUT'] = '1'
 os.environ['PYOPENCL_CTX'] = '1'
 
-NUM_OF_PICKING = 100
+NUM_OF_PICKING = 120
 
 ED_ORI = 'M:/MAI_dataset/Origin_set/ED-360-png/'        # Elephents Dream
 BBB_ORI = 'M:/MAI_dataset/Origin_set/BBB-360-png/'      # Big Buck Bunny
 TOS_ORI = 'M:/MAI_dataset/Origin_set/TOS-1080-png/'     # Tear of Steel
-ST_ORI = 'M:/MAI_dataset/Origin_set/ST-720-png/'        # Sintel Trailer
+ST_ORI = 'M:/MAI_dataset/Origin_set/ST(cut)-720-png/'        # Sintel Trailer
 
 ED_SAMPLE = 'M:/MAI_dataset/Origin_set/ED-sample/'      # Elephents Dream
 BBB_SAMPLE = 'M:/MAI_dataset/Origin_set/BBB-sample/'    # Big Buck Bunny
@@ -38,7 +38,7 @@ def OriginalFramesSampling(in_path, out_path, num, reset):
     else:
         index_in = random.randint(200, 1000)
 
-    for i in tqdm(range(index_in, index_in + num + 1), bar_format='{percentage:3.0f}%|{bar:100}{r_bar}'):
+    for i in tqdm(range(index_in, index_in + num), bar_format='{percentage:3.0f}%|{bar:100}{r_bar}'):
 
         frame_from_path = frameFiles_path[i]
         frame_to_path = f'{out_path}{os.path.basename(frameFiles_path[i])}'

@@ -11,7 +11,7 @@ output_size = (320, 180)
 
 if __name__ == '__main__':
     import DeFramePicking
-    import degraded_module
+    import DegradedModule
     import VerticalAssembly
     import SamplePicking
     import CropsExtraction
@@ -27,7 +27,7 @@ if __name__ == '__main__':
     os.system('cls||clear')
 
     print(f'INFO: Running script degraded_module...')
-    degraded_module.main(sys.argv)
+    DegradedModule.main(sys.argv)
     os.system('cls||clear')
 
     print(f'INFO: Running script VerticalAssembly...')
