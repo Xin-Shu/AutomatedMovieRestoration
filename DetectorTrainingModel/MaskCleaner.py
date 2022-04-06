@@ -125,7 +125,7 @@ def main(args):
     # date_ = '03-23'
     # attempt_ = '1'
 
-    degraded_frame_folder = f'M:/MAI_dataset/Sequence_lines_1/'
+    degraded_frame_folder = f'M:/MAI_dataset/Cinecitta/Sequence_lines_1/'
     predicted_mask_folder = f'M:/MAI_dataset/TrainedModels/{date_}/Attempt {attempt_}/mask/'
     frameOut_folder = f'M:/MAI_dataset/TrainedModels/{date_}/Attempt {attempt_}/cleaned_mask_over_frame/'
     maskOut_folder = f'M:/MAI_dataset/TrainedModels/{date_}/Attempt {attempt_}/cleaned_mask/'

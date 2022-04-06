@@ -258,7 +258,6 @@ def main(args):
             result_attempt_dir = f'{result_dir}/Attempt {attempts}'
 
     test_preds = training(train_gen, val_gen, num_classes, img_size, if_reuse, result_attempt_dir, test_gen)
-
     convert_array_to_imgs(result_attempt_dir, test_input_img_path, test_target_img_path, test_preds, False)
 
 

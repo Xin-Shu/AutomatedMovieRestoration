@@ -19,19 +19,27 @@ This means the extracted area of the original frame is 1792,
 
 ori_size = (1828, 1332)
 out_size = (320, 180)
-input_path = 'M:/MAI_dataset/Sequence_lines_1'
+input_path = 'M:/MAI_dataset/Cinecitta/Sequence_lines_1'
 output_path = 'M:/MAI_dataset/tempSamples/test_set/frame/'
+FILETYPE = 'bmp'
+numFrames = 30
 
 
-def crop_img(input_path_, output_path_, out_size_, ori_size_):
+def crop_img(input_path_, output_path_, out_size_, ori_size_, fileType, numFra):
     width, height = out_size_[0], int(out_size_[1] / 3)
-    input_img_paths = glob.glob(f'{input_path_}/*.bmp')
+    input_img_paths = glob.glob(f'{input_path_}/*.{fileType}')
     count_frame = 0
-    for index in tqdm(range(1, len(input_img_paths) - 20), bar_format='{percentage:3.0f}%|{bar:100}{r_bar}'):
+
+    if numFra > len(input_img_paths) - 5:
+        num = len(input_img_paths) - 5
+    else:
+        num = numFra
+
+    for index in tqdm(range(1, num), bar_format='{percentage:3.0f}%|{bar:100}{r_bar}'):
         count_frame += 1
-        input_img1 = cv.imread(input_img_paths[index - 1])
-        input_img2 = cv.imread(input_img_paths[index])
-        input_img3 = cv.imread(input_img_paths[index + 1])
+        input_img1 = cv.imread(input_img_paths[index - 1], cv.IMREAD_GRAYSCALE)
+        input_img2 = cv.imread(input_img_paths[index], cv.IMREAD_GRAYSCALE)
+        input_img3 = cv.imread(input_img_paths[index + 1], cv.IMREAD_GRAYSCALE)
 
         i, j = 0, 0
         while height * j <= ori_size_[1]:
@@ -49,7 +57,6 @@ def crop_img(input_path_, output_path_, out_size_, ori_size_):
                 crop2 = input_img2[topleft_y:topleft_y + height, topleft_x:topleft_x + width]
                 crop3 = input_img3[topleft_y:topleft_y + height, topleft_x:topleft_x + width]
                 crop_vertical_3 = np.concatenate((crop1, crop2, crop3), axis=0)
-                # crop_vertical_3 = cv.resize(crop_vertical_3, out_size)
                 cv.imwrite(f'{output_path_}frame{count_frame:03d}-{(i + 1):03d}-{(j + 1):03d}.png', crop_vertical_3)
 
                 i += 1
@@ -63,7 +70,7 @@ def main(args):
         if os.path.isdir(output_path):
             rmtree(output_path)
             os.mkdir(output_path)
-        crop_img(input_path, output_path, out_size, ori_size)
+        crop_img(input_path, output_path, out_size, ori_size, FILETYPE, numFrames)
 
 
 if __name__ == '__main__':

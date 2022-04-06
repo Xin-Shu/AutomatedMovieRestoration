@@ -54,7 +54,7 @@ def getPSNR(originalFolderPath, DegradedFolderPath):
         psnrArr.append(psnrTemp)
 
     print(f'INFO: The average value of PSNR for {os.path.dirname(originalFolderPath)} sequence is '
-          f'{sum(psnrArr) / len(psnrArr)} dB.')
+          f'{sum(psnrArr) / len(psnrArr):.3f} dB.\n')
 
 
 def main():

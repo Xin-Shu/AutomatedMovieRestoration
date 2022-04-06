@@ -4,7 +4,7 @@ import cv2 as cv
 from tqdm import tqdm
 
 
-FOLDER_PATH = 'M:/MAI_dataset/Sequence_lines_1'
+FOLDER_PATH = 'M:/MAI_dataset/Cinecitta/Sequence_lines_1'
 FILM_NAME = 'Cinecitta'
 fps = 30
 
