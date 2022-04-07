@@ -14,7 +14,7 @@ from CropsExtraction import crop_img
 from main import ImageLoading
 
 # Define paths
-modelPath = 'M:/MAI_dataset/TrainedModels/04-02/Attempt 1/generalDegradedDetection.h5'
+MODEL_PATH = 'M:/MAI_dataset/TrainedModels/04-02/Attempt 1/generalDegradedDetection.h5'
 
 # Define 'Carrier'
 Carrier_InPath = 'M:/MAI_dataset/Sequence_lines_1/Carrier/'
@@ -24,9 +24,19 @@ Carrier_InSize = (1920, 1080)
 Carrier_type = 'tif'
 Carrier_numFrames = 20
 
+# Define 'Cinecitta'
+Cinecitta_InPath = 'M:/MAI_dataset/Sequence_lines_1/Cinecitta/'
+Cinecitta_OutPath = 'M:/MAI_dataset/Sequence_lines_1/Cinecitta_testset/'
+Cinecitta_PredPath = 'M:/MAI_dataset/Sequence_lines_1/Cinecitta_pred/'
+Cinecitta_InSize = (1828, 1332)
+Cinecitta_type = 'bmp'
+Cinecitta_numFrames = 51
+
 # General information
-outSize = (320, 180)
-BATCH_SIZE = 16
+OUTSIZE = (320, 180)
+BATCH_SIZE = 32
+BIGIMG_THRE = 120   # Maximum value should be the height of the input image, and need to be integer multiples of 60.
+TILE_THRE = 5       # Maximum value should be the height of the tiling image, which is 60 in this case
 
 
 class ReloadImages(keras.utils.Sequence):
@@ -63,7 +73,7 @@ class MakePredictions:
         self.outPath = predOutPath
         self.rawPath = f'{self.outPath}Raw Mask/'
         self.prediction = None
-        self.outSize = outSize
+        self.outSize = outSize_
         self.oriPaths = sorted([
             os.path.join(oriFrameFolder, fname)
             for fname in os.listdir(oriFrameFolder)
@@ -93,6 +103,7 @@ class MakePredictions:
             __index += 1
 
     def assembleMask(self):
+
         maskAssembled = np.zeros([self.oriSize[1], self.oriSize[0]], dtype="uint8")
         maskWidth, maskHeight = self.outSize[0], int(self.outSize[1] / 3)
 
@@ -113,41 +124,41 @@ class MakePredictions:
             sumMask = mask_ori.sum(axis=0)
 
             maskOUT = np.zeros([mask_shape[0] // 3, mask_shape[1]], dtype="uint8")
-            threshold = 2.0
 
-            for col in range(0, len(sumMask)):
+            # for col in range(0, len(sumMask)):
+            #
+            #     if sumMask[col] >= TILE_THRE:
+            #         maskOUT[:, col] = 255
+            #     else:
+            #         maskOUT[:, col] = 0
 
-                if sumMask[col] >= threshold:
-                    maskOUT[:, col] = 255
-                else:
-                    maskOUT[:, col] = 0
+            maskOUT = mask_ori[60:120, :]
 
             frameName = os.path.basename(maskIN[i])
             maskFrameNum, maskColNum, maskRowNum = int(frameName[5:8]), int(frameName[9:12]), int(frameName[13:16])
             topLeft_x, topLeft_y = maskWidth * (maskColNum - 1), maskHeight * (maskRowNum - 1)
 
             if maskAssembled[topLeft_y:topLeft_y + maskHeight, topLeft_x:topLeft_x + maskWidth].shape == maskOUT.shape:
-
                 maskAssembled[topLeft_y:topLeft_y + maskHeight, topLeft_x:topLeft_x + maskWidth] = maskOUT
+
             else:
                 tempMaskShape = maskAssembled[topLeft_y:topLeft_y + maskHeight, topLeft_x:topLeft_x + maskWidth].shape
+
                 if tempMaskShape[0] != 0 and tempMaskShape[1] != 0:
                     maskAssembled[topLeft_y:topLeft_y + maskHeight, topLeft_x:topLeft_x + maskWidth] = \
                         maskOUT[-tempMaskShape[0]:, -tempMaskShape[1]:]
 
             if maskFrameNum_mark != maskFrameNum:
-
                 frame_ori = cv.imread(frameIN[maskFrameNum_mark], cv.IMREAD_GRAYSCALE)
                 cleanedOverlay = cv.cvtColor(frame_ori, cv.COLOR_GRAY2RGB)
 
-                threshold_EntireMask = 60
                 maskEnergy = maskAssembled.sum(axis=0) / 255
                 for col in range(0, len(maskEnergy)):
 
-                    if maskEnergy[col] >= threshold_EntireMask:
+                    if maskEnergy[col] >= BIGIMG_THRE:
                         maskAssembled[:, col] = 255
-                    else:
-                        maskAssembled[:, col] = 0
+                    # else:
+                    #     maskAssembled[:, col] = 0
 
                 cleanedOverlay[:, :, 1] = np.clip((cleanedOverlay[:, :, 1] - maskAssembled / 255 * 230), 0.0, 255.0)
                 cv.imwrite(f'{self.outPath}/{os.path.basename(frameIN[maskFrameNum_mark])}', cleanedOverlay)
@@ -155,20 +166,23 @@ class MakePredictions:
                 maskFrameNum_mark = maskFrameNum
 
 
-def main():
+def main(inSize_, inPath_, outPath_, predPath_, numFrames_, filmType):
+
     reset = True
     if reset is True:
-        if os.path.isdir(Carrier_OutPath) or os.path.isdir(Carrier_PredPath):
-            rmtree(Carrier_OutPath)
-            os.mkdir(Carrier_OutPath)
-            rmtree(Carrier_PredPath)
-            os.mkdir(Carrier_PredPath)
-        crop_img(Carrier_InPath, Carrier_OutPath, outSize, Carrier_InSize, Carrier_type, Carrier_numFrames)
+        if os.path.isdir(outPath_) or os.path.isdir(predPath_):
+            rmtree(outPath_)
+            os.mkdir(outPath_)
+            rmtree(predPath_)
+            os.mkdir(predPath_)
+        crop_img(inPath_, outPath_, OUTSIZE, inSize_, filmType, numFrames_)
 
-    imgSequence = ReloadImages(Carrier_OutPath, BATCH_SIZE, outSize)
-    pred_ = MakePredictions(modelPath, imgSequence, Carrier_PredPath, Carrier_OutPath, outSize,
-                            Carrier_InPath, Carrier_InSize, Carrier_type)
+    __imgSequence = ReloadImages(outPath_, BATCH_SIZE, OUTSIZE)
+    pred_ = MakePredictions(MODEL_PATH, __imgSequence, predPath_, outPath_, OUTSIZE,
+                            inPath_, inSize_, filmType)
 
 
 if __name__ == '__main__':
-    main()
+    # main(Carrier_InSize, Carrier_InPath, Carrier_OutPath, Carrier_PredPath, Carrier_numFrames, Carrier_type)
+    main(Cinecitta_InSize, Cinecitta_InPath, Cinecitta_OutPath, Cinecitta_PredPath, Cinecitta_numFrames, Cinecitta_type)
+
