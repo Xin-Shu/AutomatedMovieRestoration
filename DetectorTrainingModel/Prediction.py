@@ -14,7 +14,7 @@ from CropsExtraction import crop_img
 from main import ImageLoading
 
 # Define paths
-MODEL_PATH = 'M:/MAI_dataset/TrainedModels/04-02/Attempt 1/generalDegradedDetection.h5'
+MODEL_PATH = 'M:/MAI_dataset/TrainedModels/04-09/Attempt 1/generalDegradedDetection.h5'
 
 # Define 'Carrier'
 Carrier_InPath = 'M:/MAI_dataset/Sequence_lines_1/Carrier/'
@@ -22,7 +22,7 @@ Carrier_OutPath = 'M:/MAI_dataset/Sequence_lines_1/Carrier_testset/'
 Carrier_PredPath = 'M:/MAI_dataset/Sequence_lines_1/Carrier_pred/'
 Carrier_InSize = (1920, 1080)
 Carrier_type = 'tif'
-Carrier_numFrames = 20
+Carrier_numFrames = 100
 
 # Define 'Cinecitta'
 Cinecitta_InPath = 'M:/MAI_dataset/Sequence_lines_1/Cinecitta/'
@@ -32,10 +32,18 @@ Cinecitta_InSize = (1828, 1332)
 Cinecitta_type = 'bmp'
 Cinecitta_numFrames = 51
 
+# Define 'scratchTest'
+scratchTest_InPath = 'M:/MAI_dataset/Sequence_lines_1/scratchTest/'
+scratchTest_OutPath = 'M:/MAI_dataset/Sequence_lines_1/scratchTest_testset/'
+scratchTest_PredPath = 'M:/MAI_dataset/Sequence_lines_1/scratchTest_pred/'
+scratchTest_InSize = (720, 486)
+scratchTest_type = 'tif'
+scratchTest_numFrames = 100
+
 # General information
 OUTSIZE = (320, 180)
-BATCH_SIZE = 32
-BIGIMG_THRE = 120   # Maximum value should be the height of the input image, and need to be integer multiples of 60.
+BATCH_SIZE = 8
+BIGIMG_THRE = 10   # Maximum value should be the height of the input image, and need to be integer multiples of 60.
 TILE_THRE = 5       # Maximum value should be the height of the tiling image, which is 60 in this case
 
 
@@ -153,12 +161,12 @@ class MakePredictions:
                 cleanedOverlay = cv.cvtColor(frame_ori, cv.COLOR_GRAY2RGB)
 
                 maskEnergy = maskAssembled.sum(axis=0) / 255
-                for col in range(0, len(maskEnergy)):
-
-                    if maskEnergy[col] >= BIGIMG_THRE:
-                        maskAssembled[:, col] = 255
-                    # else:
-                    #     maskAssembled[:, col] = 0
+                # for col in range(0, len(maskEnergy)):
+                #
+                #     if maskEnergy[col] >= BIGIMG_THRE:
+                #         maskAssembled[:, col] = 255
+                #     else:
+                #         maskAssembled[:, col] = 0
 
                 cleanedOverlay[:, :, 1] = np.clip((cleanedOverlay[:, :, 1] - maskAssembled / 255 * 230), 0.0, 255.0)
                 cv.imwrite(f'{self.outPath}/{os.path.basename(frameIN[maskFrameNum_mark])}', cleanedOverlay)
@@ -184,5 +192,7 @@ def main(inSize_, inPath_, outPath_, predPath_, numFrames_, filmType):
 
 if __name__ == '__main__':
     # main(Carrier_InSize, Carrier_InPath, Carrier_OutPath, Carrier_PredPath, Carrier_numFrames, Carrier_type)
-    main(Cinecitta_InSize, Cinecitta_InPath, Cinecitta_OutPath, Cinecitta_PredPath, Cinecitta_numFrames, Cinecitta_type)
-
+    # main(Cinecitta_InSize, Cinecitta_InPath, Cinecitta_OutPath,
+    #      Cinecitta_PredPath, Cinecitta_numFrames, Cinecitta_type)
+    main(scratchTest_InSize, scratchTest_InPath, scratchTest_OutPath,
+         scratchTest_PredPath, scratchTest_numFrames, scratchTest_type)

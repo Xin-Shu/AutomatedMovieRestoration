@@ -19,10 +19,10 @@ This means the extracted area of the original frame is 1792,
 
 ori_size = (1828, 1332)
 out_size = (320, 180)
-input_path = 'M:/MAI_dataset/Cinecitta/Sequence_lines_1'
+input_path = 'M:/MAI_dataset/Sequence_lines_1/Cinecitta'
 output_path = 'M:/MAI_dataset/tempSamples/test_set/frame/'
 FILETYPE = 'bmp'
-numFrames = 30
+numFrames = 51
 
 
 def crop_img(input_path_, output_path_, out_size_, ori_size_, fileType, numFra):
@@ -35,11 +35,15 @@ def crop_img(input_path_, output_path_, out_size_, ori_size_, fileType, numFra):
     else:
         num = numFra
 
+    tilingCounter = 0
     for index in tqdm(range(1, num), bar_format='{percentage:3.0f}%|{bar:100}{r_bar}'):
         count_frame += 1
-        input_img1 = cv.imread(input_img_paths[index - 1], cv.IMREAD_GRAYSCALE)
-        input_img2 = cv.imread(input_img_paths[index], cv.IMREAD_GRAYSCALE)
-        input_img3 = cv.imread(input_img_paths[index + 1], cv.IMREAD_GRAYSCALE)
+        input_img1 = cv.imread(input_img_paths[index - 1], cv.IMREAD_UNCHANGED)
+        input_img2 = cv.imread(input_img_paths[index], cv.IMREAD_UNCHANGED)
+        input_img3 = cv.imread(input_img_paths[index + 1], cv.IMREAD_UNCHANGED)
+        input_img1 = input_img1[:, :, 0]
+        input_img2 = input_img2[:, :, 0]
+        input_img3 = input_img3[:, :, 0]
 
         i, j = 0, 0
         while height * j <= ori_size_[1]:
@@ -60,8 +64,11 @@ def crop_img(input_path_, output_path_, out_size_, ori_size_, fileType, numFra):
                 cv.imwrite(f'{output_path_}frame{count_frame:03d}-{(i + 1):03d}-{(j + 1):03d}.png', crop_vertical_3)
 
                 i += 1
+                tilingCounter += 1
 
             j += 1
+
+    print(f'INFO: Total number of frames generated: {tilingCounter}.')
 
 
 def main(args):

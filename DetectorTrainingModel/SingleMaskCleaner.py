@@ -52,15 +52,16 @@ def MaskCleaner(frameIN_PATH, maskIN_PATH, frameOUT_PATH, maskOUT_PATH, maskEnti
 
         sumMask = mask_ori.sum(axis=0)
 
-        maskOUT = np.zeros([mask_shape[0] // 3, mask_shape[1]], dtype="uint8")
-        threshold = 200.0
-
-        for col in range(0, len(sumMask)):
-
-            if sumMask[col] >= threshold:
-                maskOUT[:, col] = 255
-            else:
-                maskOUT[:, col] = 0
+        # maskOUT = np.zeros([mask_shape[0] // 3, mask_shape[1]], dtype="uint8")
+        # threshold = 200.0
+        #
+        # for col in range(0, len(sumMask)):
+        #
+        #     if sumMask[col] >= threshold:
+        #         maskOUT[:, col] = 255
+        #     else:
+        #         maskOUT[:, col] = 0
+        maskOUT = mask_ori[60:120, :]
 
         frameName = os.path.basename(maskIN[i])
         maskFrameNum, maskColNum, maskRowNum = int(frameName[5:8]), int(frameName[9:12]), int(frameName[13:16])
@@ -84,12 +85,12 @@ def MaskCleaner(frameIN_PATH, maskIN_PATH, frameOUT_PATH, maskOUT_PATH, maskEnti
 
             threshold_EntireMask = 300
             maskEnergy = maskAssembled.sum(axis=0) / 255
-            for col in range(0, len(maskEnergy)):
-
-                if maskEnergy[col] >= threshold_EntireMask:
-                    maskAssembled[:, col] = 255
-                else:
-                    maskAssembled[:, col] = 0
+            # for col in range(0, len(maskEnergy)):
+            #
+            #     if maskEnergy[col] >= threshold_EntireMask:
+            #         maskAssembled[:, col] = 255
+            #     else:
+            #         maskAssembled[:, col] = 0
 
             cleanedOverlay[:, :, 1] = np.clip((cleanedOverlay[:, :, 1] - maskAssembled / 255 * 230), 0.0, 255.0)
             cv.imwrite(f'{maskEntireOUT_PATH}/{os.path.basename(frameIN[maskFrameNum_mark])}', cleanedOverlay)
@@ -104,7 +105,7 @@ def main(args):
     # date_ = '03-23'
     # attempt_ = '1'
 
-    degraded_frame_folder = f'M:/MAI_dataset/Cinecitta/Sequence_lines_1/'
+    degraded_frame_folder = f'M:/MAI_dataset/Sequence_lines_1/Cinecitta/'
     predicted_mask_folder = f'M:/MAI_dataset/TrainedModels/{date_}/Attempt {attempt_}/mask/'
     frameOut_folder = f'M:/MAI_dataset/TrainedModels/{date_}/Attempt {attempt_}/cleaned_mask_over_frame/'
     maskOut_folder = f'M:/MAI_dataset/TrainedModels/{date_}/Attempt {attempt_}/cleaned_mask/'

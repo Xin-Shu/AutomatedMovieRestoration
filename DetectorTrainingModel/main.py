@@ -24,8 +24,8 @@ test_img_dir = 'M:/MAI_dataset/tempSamples/test_set/frame/'
 test_mask_dir = "M:/MAI_dataset/tempSamples/valid_set/mask/"
 img_size = (180, 320)   # np.multiply((270, 480), 0.8).astype(int)  # (270, 480)(360, 640)(180, 320)(189, 336)
 num_classes = 2
-batch_size_train = 2
-batch_size_test = 2
+batch_size_train = 16
+batch_size_test = 1
 
 date = date.today().strftime("%m-%d")
 result_dir = f'M:/MAI_dataset/TrainedModels/{date}'
@@ -86,28 +86,34 @@ def get_model(img_size_, num_classes_):
     """ [First half of the network: downsampling inputs] """
 
     # Entry block
-    x1 = layers.Conv2D(32, 3, padding="same", activation="relu")(inputs)
+    x1 = layers.Conv2D(32, 7, padding="same", activation="relu")(inputs)
     x1 = layers.BatchNormalization()(x1)
 
-    x2 = layers.Conv2D(64, 3, padding="same", activation="relu")(x1)
+    x2 = layers.Conv2D(64, 7, padding="same", activation="relu")(x1)
     x2 = layers.BatchNormalization()(x2)
 
-    x3 = layers.Conv2D(128, 3, padding="same", activation="relu")(x2)
+    x3 = layers.Conv2D(128, 7, padding="same", activation="relu")(x2)
     x3 = layers.BatchNormalization()(x3)
 
-    encoder = layers.concatenate([x1, x2, x3])
-    encoder = layers.Conv2D(64, 1, padding="same")(encoder)
+    x4 = layers.Conv2D(256, 7, padding="same", activation="relu")(x3)
+    x4 = layers.BatchNormalization()(x4)
+
+    encoder = layers.concatenate([x1, x2, x3, x4])
+    encoder = layers.Conv2D(128, 1, padding="same")(encoder)
     encoder = layers.MaxPooling2D(pool_size=(2, 2))(encoder)
 
     y1 = layers.UpSampling2D(2)(encoder)
-    y1 = layers.Conv2DTranspose(64, 3, padding="same", activation="relu")(y1)
+    y1 = layers.Conv2DTranspose(128, 7, padding="same", activation="relu")(y1)
     y1 = layers.BatchNormalization()(y1)
 
-    y2 = layers.Conv2DTranspose(32, 3, padding="same", activation="relu")(y1)
+    y2 = layers.Conv2DTranspose(64, 7, padding="same", activation="relu")(y1)
     y2 = layers.BatchNormalization()(y2)
 
+    y3 = layers.Conv2DTranspose(32, 5, padding="same", activation="relu")(y2)
+    y3 = layers.BatchNormalization()(y3)
+
     # Add a per-pixel classification layer
-    outputs = layers.Conv2D(num_classes_, 3, activation="softmax", padding="same")(y2)
+    outputs = layers.Conv2D(num_classes_, 3, activation="softmax", padding="same")(y3)
 
     # Define the model
     model_ = keras.Model(inputs, outputs)
@@ -138,7 +144,7 @@ def training(train_gen, val_gen, num_classes_, img_size_, use_pretrained, result
     global result_dir
     model_path = f'{result_attempt_dir}/generalDegradedDetection.h5'
     if use_pretrained:
-        model_path = 'M:/MAI_dataset/TrainedModels/04-02/Attempt 2/generalDegradedDetection.h5'
+        model_path = 'M:/MAI_dataset/TrainedModels/04-09/Attempt 1/generalDegradedDetection.h5'
         print(f'INFO: Using pre-trained model from: {model_path}')
         model = keras.models.load_model(model_path, compile=False)
         test_preds = model.predict(test_gen)
@@ -155,7 +161,7 @@ def training(train_gen, val_gen, num_classes_, img_size_, use_pretrained, result
         callbacks = [
             keras.callbacks.ModelCheckpoint(model_path, save_best_only=True)
         ]
-        epochs = 40
+        epochs = 30
         history = model.fit(train_gen, epochs=epochs, validation_data=val_gen, callbacks=callbacks)
 
         # list all data in history

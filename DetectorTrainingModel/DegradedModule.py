@@ -64,7 +64,7 @@ def degraded_module(name, resol, if_reset):
         scratch_num_list = []
         ori_size = cv.imread(org_folder + f'/{pngFiles[0]}').shape  # e.g., (545, 1280, 3)
 
-        line_pos_set, brightness_set = [int(ori_size[1]/5), int(ori_size[1]/2), int(ori_size[1]/1.2)], 120
+        line_pos_set, brightness_set, decay = [int(ori_size[1]/5), int(ori_size[1]/2), int(ori_size[1]/1.2)], 120, 0.5
         count = 0
         time_now = time.time()
         print(f'\nProcessing filme [{name}], {len(pngFiles)} frames in total')
@@ -84,6 +84,7 @@ def degraded_module(name, resol, if_reset):
             scratch_num_list.append(scratch_num)
 
             temp_brightness = brightness_set
+            temp_decay = decay
             temp_line_pos_set = line_pos_set
             for line_num in range(1, scratch_num + 1):  # Add randomly up to 4 lines
                 # line_pos = random.randint(max_width, cols - 2 * max_width) + max_width + 1
@@ -93,12 +94,17 @@ def degraded_module(name, resol, if_reset):
                 else:
                     temp_line_pos_set[line_num - 1] = line_pos
                 w = 4 + random.randrange(1, max_width + 2, 2)
-                a = (random.uniform(-0.5, 0.5) * np.sqrt(0.1) + 1) * temp_brightness
-                temp_brightness = a
+                a = (random.uniform(-1, 1) * np.sqrt(0.1) + 1) * temp_brightness
+                decay = (random.uniform(-1, 1) * np.sqrt(0.1) + 1) * temp_decay
+                temp_brightness, temp_decay = a, decay
                 if temp_brightness >= 230:
-                    temp_brightness = 230
-                if temp_brightness <= 20:
-                    temp_brightness = 20
+                    temp_brightness = 180
+                if temp_brightness <= -230:
+                    temp_brightness = -180
+                if temp_decay >= 0.95:
+                    temp_decay = 0.75
+                if temp_decay <= 0.05:
+                    temp_decay = 0.25
                 if line_pos - w > 0:
                     left_boundary = line_pos - int(np.floor(w / 2))
                 else:
@@ -111,11 +117,11 @@ def degraded_module(name, resol, if_reset):
                     right_boundary = left_boundary + 1
                 scratch_width = right_boundary - left_boundary
 
-                binary_mask[:, left_boundary + 2 : right_boundary - 2] = 1
+                binary_mask[:, left_boundary + 2:right_boundary - 2] = 1
                 slope = random.uniform(-1, 1) * 0.0001
                 for n in range(0, rows):
-                    profile = makeLineProfile(cols, line_pos, (a - 50), 0.25, slope, n, w)
-                    temp = degrade2[n, left_boundary:right_boundary] + profile[left_boundary:right_boundary] * 0.4
+                    profile = makeLineProfile(cols, line_pos, a, decay, slope, n, w)
+                    temp = degrade2[n, left_boundary:right_boundary] + profile[left_boundary:right_boundary] * 0.8
                     np.place(temp, temp > 255.0, 255.0)
                     np.place(temp, temp < 0.0, 0.0)
                     degrade2[n, left_boundary:right_boundary] = temp
@@ -143,4 +149,3 @@ def main(args):
 
 if __name__ == '__main__':
     main(sys.argv)
-

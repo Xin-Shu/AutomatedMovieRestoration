@@ -21,7 +21,7 @@ ST_DEGRADED = 'M:/MAI_dataset/Degraded_set/VA-ST/frame/'
 ST_MASK = 'M:/MAI_dataset/Degraded_set/VA-ST/mask/'
 
 countTrain, countValid = 0, 0
-numSamples = 300
+numSamples = 1000
 
 
 def sampling_frames(degraded_path, mask_path, name):
