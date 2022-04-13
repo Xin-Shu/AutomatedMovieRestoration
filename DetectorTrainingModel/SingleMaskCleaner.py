@@ -71,12 +71,13 @@ def MaskCleaner(frameIN_PATH, maskIN_PATH, frameOUT_PATH, maskOUT_PATH, maskEnti
         # print(f'topLeft_x: {topLeft_x}， topLeft_y： {topLeft_y}')
 
         if maskAssembled[topLeft_y:topLeft_y + maskHeight, topLeft_x:topLeft_x + maskWidth].shape == maskOUT.shape:
-
             maskAssembled[topLeft_y:topLeft_y + maskHeight, topLeft_x:topLeft_x + maskWidth] = maskOUT
         else:
             tempMaskShape = maskAssembled[topLeft_y:topLeft_y + maskHeight, topLeft_x:topLeft_x + maskWidth].shape
-            maskAssembled[topLeft_y:topLeft_y + maskHeight, topLeft_x:topLeft_x + maskWidth] = \
-                maskOUT[-tempMaskShape[0]:, -tempMaskShape[1]:]
+
+            if tempMaskShape[0] != 0 and tempMaskShape[1] != 0:
+                maskAssembled[topLeft_y:topLeft_y + maskHeight, topLeft_x:topLeft_x + maskWidth] = \
+                    maskOUT[-tempMaskShape[0]:, -tempMaskShape[1]:]
 
         if maskFrameNum_mark != maskFrameNum:
 

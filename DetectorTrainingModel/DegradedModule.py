@@ -30,7 +30,7 @@ def addGrainEffect(imageIN):
     """
     row, col = imageIN.shape
 
-    mean, variance = 0, 75
+    mean, variance = 0, 60
     sigma = variance ** 0.5
     gaussNoise = np.random.normal(mean, sigma, row * col)
     gaussNoise = gaussNoise.reshape(row, col)
@@ -59,12 +59,12 @@ def degraded_module(name, resol, if_reset):
     else:
         pngFiles = [file for file in os.listdir(org_folder) if file.endswith('.png')]
         # Processing images
-        max_width = 10
+        max_width = 7
         # colormap(gray(256));
         scratch_num_list = []
         ori_size = cv.imread(org_folder + f'/{pngFiles[0]}').shape  # e.g., (545, 1280, 3)
 
-        line_pos_set, brightness_set, decay = [int(ori_size[1]/5), int(ori_size[1]/2), int(ori_size[1]/1.2)], 120, 0.5
+        line_pos_set, brightness_set, decay = [int(ori_size[1]/5), int(ori_size[1]/2), int(ori_size[1]/1.2)], -30, 0.5
         count = 0
         time_now = time.time()
         print(f'\nProcessing filme [{name}], {len(pngFiles)} frames in total')
@@ -97,13 +97,13 @@ def degraded_module(name, resol, if_reset):
                 a = (random.uniform(-1, 1) * np.sqrt(0.1) + 1) * temp_brightness
                 decay = (random.uniform(-1, 1) * np.sqrt(0.1) + 1) * temp_decay
                 temp_brightness, temp_decay = a, decay
-                if temp_brightness >= 230:
-                    temp_brightness = 180
-                if temp_brightness <= -230:
-                    temp_brightness = -180
-                if temp_decay >= 0.95:
+                if temp_brightness >= 50:
+                    temp_brightness = 50
+                if temp_brightness <= -40:
+                    temp_brightness = -40
+                if temp_decay >= 0.75:
                     temp_decay = 0.75
-                if temp_decay <= 0.05:
+                if temp_decay <= 0.25:
                     temp_decay = 0.25
                 if line_pos - w > 0:
                     left_boundary = line_pos - int(np.floor(w / 2))
@@ -121,7 +121,7 @@ def degraded_module(name, resol, if_reset):
                 slope = random.uniform(-1, 1) * 0.0001
                 for n in range(0, rows):
                     profile = makeLineProfile(cols, line_pos, a, decay, slope, n, w)
-                    temp = degrade2[n, left_boundary:right_boundary] + profile[left_boundary:right_boundary] * 0.8
+                    temp = degrade2[n, left_boundary:right_boundary] + profile[left_boundary:right_boundary] * 0.5
                     np.place(temp, temp > 255.0, 255.0)
                     np.place(temp, temp < 0.0, 0.0)
                     degrade2[n, left_boundary:right_boundary] = temp

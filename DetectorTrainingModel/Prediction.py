@@ -5,16 +5,13 @@ import cv2 as cv
 import numpy as np
 from tqdm import tqdm
 from shutil import rmtree
-from datetime import date
-import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.preprocessing.image import load_img
 
 from CropsExtraction import crop_img
-from main import ImageLoading
 
 # Define paths
-MODEL_PATH = 'M:/MAI_dataset/TrainedModels/04-09/Attempt 1/generalDegradedDetection.h5'
+MODEL_PATH = 'M:/MAI_dataset/TrainedModels/04-12/Attempt 2/generalDegradedDetection.h5'
 
 # Define 'Carrier'
 Carrier_InPath = 'M:/MAI_dataset/Sequence_lines_1/Carrier/'
@@ -40,11 +37,27 @@ scratchTest_InSize = (720, 486)
 scratchTest_type = 'tif'
 scratchTest_numFrames = 100
 
+# Define 'Sitdown'
+Sitdown_InPath = 'M:/MAI_dataset/Sequence_lines_1/Sitdown/'
+Sitdown_OutPath = 'M:/MAI_dataset/Sequence_lines_1/Sitdown_testset/'
+Sitdown_PredPath = 'M:/MAI_dataset/Sequence_lines_1/Sitdown_pred/'
+Sitdown_InSize = (512, 512)
+Sitdown_type = 'png'
+Sitdown_numFrames = 10
+
+# Define 'Knight'
+Knight_InPath = 'M:/MAI_dataset/Sequence_lines_1/Knight/'
+Knight_OutPath = 'M:/MAI_dataset/Sequence_lines_1/Knight_testset/'
+Knight_PredPath = 'M:/MAI_dataset/Sequence_lines_1/Knight_pred/'
+Knight_InSize = (512, 512)
+Knight_type = 'png'
+Knight_numFrames = 64
+
 # General information
 OUTSIZE = (320, 180)
 BATCH_SIZE = 8
 BIGIMG_THRE = 10   # Maximum value should be the height of the input image, and need to be integer multiples of 60.
-TILE_THRE = 5       # Maximum value should be the height of the tiling image, which is 60 in this case
+TILE_THRE = 50     # Maximum value should be the height of the tiling image, which is 60 in this case
 
 
 class ReloadImages(keras.utils.Sequence):
@@ -138,9 +151,9 @@ class MakePredictions:
             #     if sumMask[col] >= TILE_THRE:
             #         maskOUT[:, col] = 255
             #     else:
-            #         maskOUT[:, col] = 0
-
-            maskOUT = mask_ori[60:120, :]
+            #         maskOUT[:, col] = mask_ori[60:120, col]
+            #
+            maskOUT = mask_ori[60:120, :]   # Only uncomment this line when making the first time prediction
 
             frameName = os.path.basename(maskIN[i])
             maskFrameNum, maskColNum, maskRowNum = int(frameName[5:8]), int(frameName[9:12]), int(frameName[13:16])
@@ -196,3 +209,7 @@ if __name__ == '__main__':
     #      Cinecitta_PredPath, Cinecitta_numFrames, Cinecitta_type)
     main(scratchTest_InSize, scratchTest_InPath, scratchTest_OutPath,
          scratchTest_PredPath, scratchTest_numFrames, scratchTest_type)
+    # main(Sitdown_InSize, Sitdown_InPath, Sitdown_OutPath,
+    #      Sitdown_PredPath, Sitdown_numFrames, Sitdown_type)
+    # main(Knight_InSize, Knight_InPath, Knight_OutPath,
+    #      Knight_PredPath, Knight_numFrames, Knight_type)

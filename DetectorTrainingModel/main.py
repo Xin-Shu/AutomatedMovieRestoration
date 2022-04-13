@@ -24,7 +24,7 @@ test_img_dir = 'M:/MAI_dataset/tempSamples/test_set/frame/'
 test_mask_dir = "M:/MAI_dataset/tempSamples/valid_set/mask/"
 img_size = (180, 320)   # np.multiply((270, 480), 0.8).astype(int)  # (270, 480)(360, 640)(180, 320)(189, 336)
 num_classes = 2
-batch_size_train = 16
+batch_size_train = 1
 batch_size_test = 1
 
 date = date.today().strftime("%m-%d")

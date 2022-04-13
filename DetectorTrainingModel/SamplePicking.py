@@ -21,7 +21,7 @@ ST_DEGRADED = 'M:/MAI_dataset/Degraded_set/VA-ST/frame/'
 ST_MASK = 'M:/MAI_dataset/Degraded_set/VA-ST/mask/'
 
 countTrain, countValid = 0, 0
-numSamples = 1000
+numSamples = 500
 
 
 def sampling_frames(degraded_path, mask_path, name):
@@ -86,10 +86,10 @@ def main(args):
         os.mkdir('M:/MAI_dataset/tempSamples/valid_set/frame')
         os.mkdir('M:/MAI_dataset/tempSamples/valid_set/mask')
 
-    sampling_frames(ED_DEGRADED, ED_MASK, 'ED')
+    # sampling_frames(ED_DEGRADED, ED_MASK, 'ED')
     sampling_frames(BBB_DEGRADED, BBB_MASK, 'BBB')
     sampling_frames(TOS_DEGRADED, TOS_MASK, 'TOS')
-    sampling_frames(ST_DEGRADED, ST_MASK, 'ST')
+    # sampling_frames(ST_DEGRADED, ST_MASK, 'ST')
 
 
 if __name__ == '__main__':
