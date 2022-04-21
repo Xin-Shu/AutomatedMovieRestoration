@@ -46,7 +46,7 @@ def getPSNR(originalFolderPath, DegradedFolderPath):
               f'{len(oriFramePaths)} != {len(degFramePaths)}')
 
     psnrArr = []
-    for i in tqdm(range(0, len(oriFramePaths) - 1), bar_format='{percentage:3.0f}%|{bar:100}{r_bar}'):
+    for i in tqdm(range(0, len(oriFramePaths)), bar_format='{percentage:3.0f}%|{bar:100}{r_bar}'):
 
         oriFrame = cv.imread(oriFramePaths[i], cv.IMREAD_GRAYSCALE)
         degFrame = cv.imread(degFramePaths[i], cv.IMREAD_GRAYSCALE)
@@ -62,6 +62,7 @@ def main():
     getPSNR(ORI_BBB_FOLDER, DEG_BBB_FOLDER)
     getPSNR(ORI_ED_FOLDER, DEG_ED_FOLDER)
     getPSNR(ORI_TOS_FOLDER, DEG_TOS_FOLDER)
+    # getPSNR('M:/MAI_dataset/Sequence_lines_1/LINES/Knight/', 'M:/MAI_dataset/Sequence_lines_1/Knight/')
 
 
 if __name__ == '__main__':

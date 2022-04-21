@@ -22,17 +22,17 @@ if __name__ == '__main__':
     DeFramePicking.main(sys.argv)
     os.system('cls||clear')
 
-    print(f'INFO: Running script CropsExtraction...')
-    CropsExtraction.main(sys.argv)
-    os.system('cls||clear')
+    # print(f'INFO: Running script CropsExtraction...')
+    # CropsExtraction.main(sys.argv)
+    # os.system('cls||clear')
 
     print(f'INFO: Running script degraded_module...')
     DegradedModule.main(sys.argv)
     os.system('cls||clear')
 
-    print(f'INFO: Running script VerticalAssembly...')
-    VerticalAssembly.main(sys.argv)
-    os.system('cls||clear')
+    # print(f'INFO: Running script VerticalAssembly...')
+    # VerticalAssembly.main(sys.argv)
+    # os.system('cls||clear')
 
     print(f'INFO: Running script SamplePicking...')
     SamplePicking.main(sys.argv)

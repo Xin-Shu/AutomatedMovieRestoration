@@ -38,10 +38,9 @@ def addGrainEffect(imageIN):
     return imageIN + gaussNoise
 
 
-def degraded_module(name, resol, if_reset):
+def degraded_module(name, if_reset):
 
     org_folder = f'M:/MAI_dataset/Origin_set/{name}-sample'
-
     degrade_folder = f'M:/MAI_dataset/Degraded_set/SAMPLE-{name}/frame'
     mask_folder = f'M:/MAI_dataset/Degraded_set/SAMPLE-{name}/mask'
 
@@ -64,7 +63,8 @@ def degraded_module(name, resol, if_reset):
         scratch_num_list = []
         ori_size = cv.imread(org_folder + f'/{pngFiles[0]}').shape  # e.g., (545, 1280, 3)
 
-        line_pos_set, brightness_set, decay = [int(ori_size[1]/5), int(ori_size[1]/2), int(ori_size[1]/1.2)], -30, 0.5
+        line_pos_set, brightness_set, decay = [int(ori_size[1]/5), int(ori_size[1]/2), int(ori_size[1]/1.2)], 120, 0.5
+        lineWidth_set = 5
         count = 0
         time_now = time.time()
         print(f'\nProcessing filme [{name}], {len(pngFiles)} frames in total')
@@ -84,6 +84,7 @@ def degraded_module(name, resol, if_reset):
             scratch_num_list.append(scratch_num)
 
             temp_brightness = brightness_set
+            temp_lineWidth = lineWidth_set
             temp_decay = decay
             temp_line_pos_set = line_pos_set
             for line_num in range(1, scratch_num + 1):  # Add randomly up to 4 lines
@@ -93,14 +94,18 @@ def degraded_module(name, resol, if_reset):
                     temp_line_pos_set = line_pos_set
                 else:
                     temp_line_pos_set[line_num - 1] = line_pos
-                w = 4 + random.randrange(1, max_width + 2, 2)
+                w = random.randrange(-1, 1) + temp_lineWidth
                 a = (random.uniform(-1, 1) * np.sqrt(0.1) + 1) * temp_brightness
                 decay = (random.uniform(-1, 1) * np.sqrt(0.1) + 1) * temp_decay
-                temp_brightness, temp_decay = a, decay
-                if temp_brightness >= 50:
-                    temp_brightness = 50
-                if temp_brightness <= -40:
-                    temp_brightness = -40
+                temp_brightness, temp_decay, temp_lineWidth = a, decay, w
+                if temp_lineWidth >= 9:
+                    temp_lineWidth = 9
+                if temp_lineWidth <= 3:
+                    temp_lineWidth = 3
+                if temp_brightness >= 200:
+                    temp_brightness = 180
+                if temp_brightness <= 50:
+                    temp_brightness = 80
                 if temp_decay >= 0.75:
                     temp_decay = 0.75
                 if temp_decay <= 0.25:
@@ -117,8 +122,8 @@ def degraded_module(name, resol, if_reset):
                     right_boundary = left_boundary + 1
                 scratch_width = right_boundary - left_boundary
 
-                binary_mask[:, left_boundary + 2:right_boundary - 2] = 1
-                slope = random.uniform(-1, 1) * 0.0001
+                binary_mask[:, left_boundary:right_boundary] = 1
+                slope = random.uniform(-1, 1) * 0.0005
                 for n in range(0, rows):
                     profile = makeLineProfile(cols, line_pos, a, decay, slope, n, w)
                     temp = degrade2[n, left_boundary:right_boundary] + profile[left_boundary:right_boundary] * 0.5
@@ -126,24 +131,19 @@ def degraded_module(name, resol, if_reset):
                     np.place(temp, temp < 0.0, 0.0)
                     degrade2[n, left_boundary:right_boundary] = temp
 
-            degrade2 = addGrainEffect(degrade2)
+            # degrade2 = addGrainEffect(degrade2)
 
             degradedFullName = degrade_folder + f'/{count:05d}' + '.png'
             maskFullName = mask_folder + f'/{count:05d}' + '.png'
             cv.imwrite(degradedFullName, degrade2)
             cv.imwrite(maskFullName, binary_mask)
 
-            # cv.imshow(f'Degraded frame', cv.resize(degrade2, [960, 540]))
-            # cv.imshow(f'Mask', cv.resize(binary_mask, [960, 540]))
-            # cv.moveWindow(f'Degraded frame', 1000, 0)
-            # cv.moveWindow(f'Mask', 1000, 541)
-            # cv.waitKey(1)
-
 
 def main(args):
-    film_name = [['ST', 'ST(cut)-720'], ['BBB', 'BBB-360'], ['ED', 'ED-360'], ['TOS', 'TOS-1080']]
-    for name, resol in film_name:
-        degraded_module(name, resol, 1)
+    film_name = ['BBB', 'ED', 'TOS', 'ST']
+    # film_name = [['Thesis', '']]
+    for name in film_name:
+        degraded_module(name, 1)
         print(f'INFO: Finished picture processing of film: {name}!')
 
 

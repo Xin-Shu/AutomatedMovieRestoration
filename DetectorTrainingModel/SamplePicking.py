@@ -8,17 +8,17 @@ os.environ['PYOPENCL_COMPILER_OUTPUT'] = '1'
 os.environ['PYOPENCL_CTX'] = '1'
 
 # Elephents Dream
-ED_DEGRADED = 'M:/MAI_dataset/Degraded_set/VA-ED/frame/'
-ED_MASK = 'M:/MAI_dataset/Degraded_set/VA-ED/mask/'
+ED_DEGRADED = 'M:/MAI_dataset/Degraded_set/SAMPLE-ED/frame/'
+ED_MASK = 'M:/MAI_dataset/Degraded_set/SAMPLE-ED/mask/'
 # Big Buck Bunny
-BBB_DEGRADED = 'M:/MAI_dataset/Degraded_set/VA-BBB/frame/'
-BBB_MASK = 'M:/MAI_dataset/Degraded_set/VA-BBB/mask/'
+BBB_DEGRADED = 'M:/MAI_dataset/Degraded_set/SAMPLE-BBB/frame/'
+BBB_MASK = 'M:/MAI_dataset/Degraded_set/SAMPLE-BBB/mask/'
 # Tear of Steel
-TOS_DEGRADED = 'M:/MAI_dataset/Degraded_set/VA-TOS/frame/'
-TOS_MASK = 'M:/MAI_dataset/Degraded_set/VA-TOS/mask/'
+TOS_DEGRADED = 'M:/MAI_dataset/Degraded_set/SAMPLE-TOS/frame/'
+TOS_MASK = 'M:/MAI_dataset/Degraded_set/SAMPLE-TOS/mask/'
 # Sintel Trailer
-ST_DEGRADED = 'M:/MAI_dataset/Degraded_set/VA-ST/frame/'
-ST_MASK = 'M:/MAI_dataset/Degraded_set/VA-ST/mask/'
+ST_DEGRADED = 'M:/MAI_dataset/Degraded_set/SAMPLE-ST/frame/'
+ST_MASK = 'M:/MAI_dataset/Degraded_set/SAMPLE-ST/mask/'
 
 countTrain, countValid = 0, 0
 numSamples = 500
@@ -45,8 +45,8 @@ def sampling_frames(degraded_path, mask_path, name):
     )
     totalFrames = len(frameFiles)
 
-    indexTrainSample = random.sample(range(0, int(totalFrames * 0.75)), int(numSamples * 0.75))
-    indexValidSample = random.sample(range(int(totalFrames * 0.75), totalFrames), int(numSamples * 0.25))
+    indexTrainSample = random.sample(range(0, int(totalFrames * 0.9)), int(numSamples * 0.9))
+    indexValidSample = random.sample(range(int(totalFrames * 0.9), totalFrames), int(numSamples * 0.1))
 
     print(f'\nProcessing training set [{name}]: '
           f'randomly pick {len(indexTrainSample)} from {totalFrames} frames.')
@@ -86,10 +86,10 @@ def main(args):
         os.mkdir('M:/MAI_dataset/tempSamples/valid_set/frame')
         os.mkdir('M:/MAI_dataset/tempSamples/valid_set/mask')
 
-    # sampling_frames(ED_DEGRADED, ED_MASK, 'ED')
+    sampling_frames(ED_DEGRADED, ED_MASK, 'ED')
     sampling_frames(BBB_DEGRADED, BBB_MASK, 'BBB')
     sampling_frames(TOS_DEGRADED, TOS_MASK, 'TOS')
-    # sampling_frames(ST_DEGRADED, ST_MASK, 'ST')
+    sampling_frames(ST_DEGRADED, ST_MASK, 'ST')
 
 
 if __name__ == '__main__':

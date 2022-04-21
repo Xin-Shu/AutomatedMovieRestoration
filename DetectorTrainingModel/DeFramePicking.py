@@ -7,7 +7,7 @@ from shutil import copyfile, rmtree
 os.environ['PYOPENCL_COMPILER_OUTPUT'] = '1'
 os.environ['PYOPENCL_CTX'] = '1'
 
-NUM_OF_PICKING = 120
+NUM_OF_PICKING = 500
 
 ED_ORI = 'M:/MAI_dataset/Origin_set/ED-360-png/'        # Elephents Dream
 BBB_ORI = 'M:/MAI_dataset/Origin_set/BBB-360-png/'      # Big Buck Bunny
@@ -36,7 +36,7 @@ def OriginalFramesSampling(in_path, out_path, num, reset):
     if totalFrames > 10000:
         index_in = random.randint(int(totalFrames * 0.3), int(totalFrames * 0.7))
     else:
-        index_in = random.randint(200, 1000)
+        index_in = 200 # random.randint(200, 1000)
 
     for i in tqdm(range(index_in, index_in + num), bar_format='{percentage:3.0f}%|{bar:100}{r_bar}'):
 
