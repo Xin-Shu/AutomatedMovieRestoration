@@ -29,9 +29,12 @@ With this architecture, 3,428,642 trainable parameters and 1,408 non-trainable p
 ![Detection example from a unknow RGB sequence](figures/scratch034_comp.png)
 
 ## Environment Requirements
-The code has been tested with Python 3.6 and TensorFlow 1.15.5
+The code has been tested with Python 3.6 and TensorFlow 1.15.5 on AMD core device.
 ```
-conda 
+conda create --name afsd python=3.6
+conda activate afsd
+conda install numpy, opencv-python
+pip install tensorflow-directml
 ```
 
 
