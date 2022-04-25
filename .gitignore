@@ -1,10 +1,6 @@
 
+*.xml
 *.pyc
-*.pyc
-DetectorTrainingModel/__pycache__/CropsExtraction.cpython-36.pyc
-*.pyc
-*.pyc
-DetectorTrainingModel/temp.py
-*.pyc
-*.pyc
-*.pyc
+*.iml
+*.m
+*.m
