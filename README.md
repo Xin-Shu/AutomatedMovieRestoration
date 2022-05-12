@@ -8,7 +8,7 @@ This repository contains the source codes for the MAI research project specified
 The workflow contains the <em>Aritficial degrade film dataset preparation, 
 CNN model training, and prediction post-processing.</em>
 ```
-@techreport{warren,
+@techreport{AutomateLineScratchDetection,
     author = {Shu, Xin},
     title = {Automated Film Scratch Detection},
     institution = {Trinity College Dublin},
